@@ -5,4 +5,7 @@
 jupyterlab
 pandas
 holoviews
+matplotlib
+hvplot
 requests
+xlrd  # to read excel files
