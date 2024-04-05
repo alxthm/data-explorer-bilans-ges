@@ -3,7 +3,11 @@ import pandas as pd
 import panel as pn
 from hvplot import hvPlot
 
-_OPTS = dict(frame_height=350, frame_width=600)
+import hvplot.pandas  # noqa
+
+pd.options.plotting.backend = "holoviews"
+
+PLOT_OPTS = dict(frame_height=350, frame_width=600)
 
 
 def select_widget(
@@ -54,7 +58,7 @@ def _get_hvplot(
         opts = dict(
             ylabel="tCO2 eq.",
             logx=True,
-            **_OPTS,
+            **PLOT_OPTS,
         )
     elif plot_col == "emissions_par_salarie":
         # compute the upper bound of all whisker plots
@@ -68,7 +72,7 @@ def _get_hvplot(
         opts = dict(
             ylabel="tCO2 eq. / salarié",
             ylim=(-1.0, upper + 1.0),
-            **_OPTS,
+            **PLOT_OPTS,
         )
     else:
         raise ValueError(f"Invalid {plot_col=}")
@@ -86,3 +90,25 @@ def _get_hvplot(
         )
         .opts(title=f"n_bilans={x.Id.nunique()}", invert_axes=True, **opts)
     )
+
+
+def plot_nunique(_df, groupby: str, sort=True, opts=None):
+    if opts is None:
+        opts = dict(multi_level=False, **PLOT_OPTS)
+
+    x = _df.groupby([groupby], as_index=False).nunique()
+    if sort:
+        x = x.sort_values("Id", ascending=False)
+    x = x.plot(x=groupby, y=["Id", "SIREN principal"], kind="bar", rot=90)
+    return x.opts(**opts, shared_axes=False)
+
+
+def yearly_evolution(_df, col, opts=None):
+    if opts is None:
+        opts = dict(multi_level=False, **PLOT_OPTS)
+
+    x = _df.groupby(["Année de reporting", col], as_index=False)[
+        "SIREN principal"
+    ].nunique()
+    x = x.pivot(columns=col, index="Année de reporting", values="SIREN principal")
+    return x.plot(kind="bar", rot=90).opts(**opts, shared_axes=False)
