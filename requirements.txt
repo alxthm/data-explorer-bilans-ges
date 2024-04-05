@@ -7,5 +7,7 @@ pandas
 holoviews
 matplotlib
 hvplot
+plotly
 requests
 xlrd  # to read excel files
+scipy  # for kde plots
