@@ -27,4 +27,4 @@ pane = pn.Column(
     ),
 )
 
-pane.servable()
+pane.servable(title='Data Explorer - Bilans GES ADEME')
