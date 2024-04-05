@@ -17,6 +17,17 @@ def disable_logo(plot, element):
 # Remove bokeh logo https://stackoverflow.com/a/47586547/12662410
 hv.plotting.bokeh.ElementPlot.hooks.append(disable_logo)
 
+
+def _patched_get_data(*args, **kwargs):
+    data, mapping, style = _original_get_data(*args, **kwargs)
+    mapping["circle_1"]["radius"] = 0.01
+    return data, mapping, style
+
+
+# apply https://github.com/holoviz/holoviews/pull/6169/files temporarily
+_original_get_data = hv.plotting.bokeh.stats.BoxWhiskerPlot.get_data
+hv.plotting.bokeh.stats.BoxWhiskerPlot.get_data = _patched_get_data
+
 PLOT_OPTS = dict(frame_height=350, frame_width=600)
 
 
