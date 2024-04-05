@@ -1,11 +1,21 @@
 import numpy as np
 import pandas as pd
 import panel as pn
+import holoviews as hv
 from hvplot import hvPlot
 
 import hvplot.pandas  # noqa
 
+# make df.plot return a hvPlot
 pd.options.plotting.backend = "holoviews"
+
+
+def disable_logo(plot, element):
+    plot.state.toolbar.logo = None
+
+
+# Remove bokeh logo https://stackoverflow.com/a/47586547/12662410
+hv.plotting.bokeh.ElementPlot.hooks.append(disable_logo)
 
 PLOT_OPTS = dict(frame_height=350, frame_width=600)
 
