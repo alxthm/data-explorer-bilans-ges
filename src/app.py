@@ -7,7 +7,16 @@ from src.visualization.panel.profiles import get_profiles_dashboard
 
 _SRC_PATH = Path(__file__).resolve().parent
 
-pn.extension('plotly')
+pn.extension("plotly")
+
+template = pn.Template(
+    """
+{% extends base %}
+{% block postamble %}
+    <script defer data-domain="alxthm-data-explorer-bilans-ges-ademe.hf.space" src="https://plausible.io/js/script.js"></script>
+{% endblock %}
+    """
+)
 
 
 def _markdown(name: str):
@@ -18,7 +27,7 @@ def _markdown(name: str):
 benchmark = get_benchmark_dashboard()
 profiles = get_profiles_dashboard()
 
-pane = pn.Column(
+main = pn.Column(
     _markdown("header"),
     pn.Tabs(
         ("Benchmark Émissions", benchmark),
@@ -27,4 +36,5 @@ pane = pn.Column(
     ),
 )
 
-pane.servable(title='Data Explorer - Bilans GES ADEME')
+template.add_panel("main", main)
+template.servable(title="Data Explorer - Bilans GES ADEME")
