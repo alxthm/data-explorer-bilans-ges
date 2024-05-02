@@ -30,6 +30,10 @@ class Plot:
     description: Optional[str] = None
 
 
+def plot_type_structure(df):
+    return plot_nunique(df, "Type de structure", rot=45)
+
+
 class TailleEntreprise:
     def __init__(self, df):
         self.df = df
@@ -46,7 +50,7 @@ class TailleEntreprise:
             )
             .nunique()
             .rename(columns=_LABELS_NUNIQUE)
-            .rename(columns={"nb_salaries_range": "Nb. Salariés"})
+            .rename(columns={"nb_salaries_range": LABELS.n_salaries})
             .sort_values(by="nb_salaries_min")
         )
         return x
@@ -54,7 +58,7 @@ class TailleEntreprise:
     def plot(self, type_structure):
         x = self._intermediate_df(type_structure)
         x = x.plot(
-            x="Nb. Salariés",
+            x=LABELS.n_salaries,
             y=LABELS.n_bilans,
             kind="bar",
             rot=90,
@@ -118,10 +122,10 @@ def _get_plots(df):
     return [
         Plot(
             title="Type de structure",
-            widget=plot_nunique(df, "Type de structure"),
+            widget=plot_type_structure(df),
             description="Différentes entités peuvent déposer des bilans GES sur le site de l'ADEME: entreprises, mais"
-            " également organismes publics ou associations. Chaque entité est identifiée par son"
-            " [numéro SIREN](https://www.insee.fr/fr/metadonnees/definition/c2047).",
+                        " également organismes publics ou associations. Chaque entité est identifiée par son"
+                        " [numéro SIREN](https://www.insee.fr/fr/metadonnees/definition/c2047).",
         ),
         Plot(
             title="Taille des entités",
