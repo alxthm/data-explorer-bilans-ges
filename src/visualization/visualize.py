@@ -17,6 +17,9 @@ def disable_logo(plot, element):
 # Remove bokeh logo https://stackoverflow.com/a/47586547/12662410
 hv.plotting.bokeh.ElementPlot.hooks.append(disable_logo)
 
+# Disable mouse wheel zoom by default
+hv.plotting.bokeh.element.ElementPlot.active_tools = ["pan"]
+
 
 def _patched_get_data(*args, **kwargs):
     data, mapping, style = _original_get_data(*args, **kwargs)
