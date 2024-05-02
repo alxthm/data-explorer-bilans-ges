@@ -4,10 +4,12 @@
 # external requirements
 jupyterlab
 pandas
+xarray
 holoviews
 matplotlib
 hvplot
 plotly
+bokeh
 requests
 xlrd  # to read excel files
 scipy  # for kde plots

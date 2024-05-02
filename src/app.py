@@ -2,8 +2,8 @@ from pathlib import Path
 
 import panel as pn
 
-from src.visualization.panel.benchmark import get_benchmark_dashboard
-from src.visualization.panel.profiles import get_profiles_dashboard
+from src.visualization.panel_figures.benchmark import get_benchmark_dashboard
+from src.visualization.panel_figures.profiles import get_profiles_dashboard
 
 _SRC_PATH = Path(__file__).resolve().parent
 

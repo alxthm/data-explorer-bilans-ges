@@ -37,7 +37,7 @@ PLOT_OPTS = dict(frame_height=350, frame_width=600)
 def select_widget(
     df: pd.DataFrame, col: str, name=None, sort=False, widget=pn.widgets.Select
 ):
-    """Construct a panel widget from the df[col] unique values"""
+    """Construct a panel_figures widget from the df[col] unique values"""
     options = df[col].unique().tolist()
     if None in options:
         options.remove(None)
@@ -116,14 +116,34 @@ def _get_hvplot(
     )
 
 
-def plot_nunique(_df, groupby: str, sort=True, opts=None):
+class LABELS:
+    n_bilans = "Nb. bilans déposés"
+    n_entites = "Nb. entités ayant déposé\n au moins un bilan"
+
+
+_LABELS_NUNIQUE = {
+    "Id": LABELS.n_bilans,
+    "SIREN principal": LABELS.n_entites,
+}
+
+
+def df_nunique(df, groupby: str, sort=True):
+    x = df.groupby([groupby], as_index=False).nunique().rename(columns=_LABELS_NUNIQUE)
+    if sort:
+        x = x.sort_values(LABELS.n_bilans, ascending=False)
+    return x
+
+
+def plot_nunique(df, groupby: str, sort=True, opts=None):
+    x = df_nunique(df, groupby, sort)
     if opts is None:
         opts = dict(multi_level=False, **PLOT_OPTS)
-
-    x = _df.groupby([groupby], as_index=False).nunique()
-    if sort:
-        x = x.sort_values("Id", ascending=False)
-    x = x.plot(x=groupby, y=["Id", "SIREN principal"], kind="bar", rot=90)
+    x = x.plot(
+        x=groupby,
+        y=[LABELS.n_bilans, LABELS.n_entites],
+        kind="bar",
+        rot=90,
+    )
     return x.opts(**opts, shared_axes=False)
 
 
@@ -131,8 +151,15 @@ def yearly_evolution(_df, col, opts=None):
     if opts is None:
         opts = dict(multi_level=False, **PLOT_OPTS)
 
-    x = _df.groupby(["Année de reporting", col], as_index=False)[
-        "SIREN principal"
-    ].nunique()
-    x = x.pivot(columns=col, index="Année de reporting", values="SIREN principal")
+    x = _df.groupby(["Année de reporting", col], as_index=False)
+    x = (
+        x["SIREN principal"]
+        .nunique()
+        .rename(columns={"SIREN principal": LABELS.n_entites})
+        .pivot(
+            columns=col,
+            index="Année de reporting",
+            values=LABELS.n_entites,
+        )
+    )
     return x.plot(kind="bar", rot=90).opts(**opts, shared_axes=False)
