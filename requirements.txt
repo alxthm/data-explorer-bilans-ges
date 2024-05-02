@@ -13,6 +13,7 @@ bokeh
 requests
 xlrd  # to read excel files
 scipy  # for kde plots
+selenium  # for bokeh.io exports
 
 # devtools
 ruff
