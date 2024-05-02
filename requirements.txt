@@ -16,3 +16,4 @@ scipy  # for kde plots
 
 # devtools
 ruff
+pytest
