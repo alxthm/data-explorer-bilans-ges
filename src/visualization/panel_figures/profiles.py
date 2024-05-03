@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from holoviews.plotting.util import process_cmap
 from typing import Optional, Any
 
 import panel as pn
@@ -91,14 +92,56 @@ class TailleEntreprise:
         )
 
 
-def _date_publication(df):
-    x = (
-        df.groupby(["month_publication"])[["Id", "SIREN principal"]]
-        .nunique()
-        .rename(columns=_LABELS_NUNIQUE)
-        .cumsum()
-    )
-    return x.plot().opts(shared_axes=False)
+def plot_annee_publication(df):
+    class L:
+        annee_publication = "Année de publication"
+        annee_reporting_rel = "Année de reporting (relative, digit)"
+        annee_reporting_rel_label = "Année de reporting (relative)"
+
+    # Compute the reporting year relative to publication year
+    x = df.rename(columns=_LABELS_NUNIQUE)
+    x.month_publication = pd.to_datetime(x.month_publication)
+    x[L.annee_publication] = x.month_publication.dt.year
+    x[L.annee_reporting_rel] = x["Année de reporting"] - x[L.annee_publication]
+
+    # Get a nice label for that
+    def label_n(n):
+        if n == 0:
+            return "N"
+        if n > 0:
+            # strangely, some publications report data for years in the future
+            return "> N"
+        if n <= -5:
+            # some go far in the past (N-11), regroup everything to be less spammy
+            return "< N-5"
+        return f"N-{abs(n)}"
+
+    x[L.annee_reporting_rel_label] = x[L.annee_reporting_rel].map(label_n)
+
+    # build a custom colormap: the last value is red on purpose, to indicate
+    # that '> N' is not a normal value
+    n_labels = x[L.annee_reporting_rel_label].nunique()
+    cmap = process_cmap("blues", ncolors=n_labels - 1) + ["darkred"]
+
+    def hook(plot, element):
+        # fix the legend title, using the underlying bokeh API
+        # https://discourse.holoviz.org/t/removing-legend-title/1317/2
+        plot.state.legend.title = "Année de reporting"
+
+    x = x.sort_values([L.annee_publication, L.annee_reporting_rel])
+    x = x.groupby([L.annee_publication, L.annee_reporting_rel_label], sort=False)
+    x = x[LABELS.n_bilans].nunique()
+    return x.plot(kind="bar", stacked=True, cmap=cmap).opts(**PLOT_OPTS, hooks=[hook])
+
+
+def plot_mois_publication(df):
+    x = df.rename(columns=_LABELS_NUNIQUE)
+    x.month_publication = pd.to_datetime(x.month_publication)
+    x["month_publication_digit"] = x.month_publication.dt.month
+    x["Mois de la publication"] = x.month_publication.dt.month_name("fr_FR.UTF-8")
+    x = x.groupby(["month_publication_digit", "Mois de la publication"])
+    x = x[LABELS.n_bilans].nunique()
+    return x.plot(x="Mois de la publication", kind="bar").opts(**PLOT_OPTS)
 
 
 def _secteur_activite_treemap(df):
@@ -124,8 +167,8 @@ def _get_plots(df):
             title="Type de structure",
             widget=plot_type_structure(df),
             description="Différentes entités peuvent déposer des bilans GES sur le site de l'ADEME: entreprises, mais"
-                        " également organismes publics ou associations. Chaque entité est identifiée par son"
-                        " [numéro SIREN](https://www.insee.fr/fr/metadonnees/definition/c2047).",
+            " également organismes publics ou associations. Chaque entité est identifiée par son"
+            " [numéro SIREN](https://www.insee.fr/fr/metadonnees/definition/c2047).",
         ),
         Plot(
             title="Taille des entités",
@@ -133,12 +176,17 @@ def _get_plots(df):
             description=TailleEntreprise(df).description(),
         ),
         Plot(
-            title="Année de reporting",
-            widget=plot_nunique(df, "Année de reporting", sort=False),
+            title="Année de publication",
+            widget=plot_annee_publication(df),
+            description="La date de publication correspond à la date à laquelle un bilan GES "
+            "est mis en ligne sur le site de l'ADEME.\n"
+            "L'année de reporting correspond à l'année pour laquelle les émissions ont été calculées.\n\n"
+            "> Note: pour un tout petit nombre de bilans, l'année de reporting est plus grande que l'année de "
+            "publication (`> N`), ce qui pourrait être une erreur.",
         ),
         Plot(
-            title="Date de publication",
-            widget=_date_publication(df),
+            title="Mois de publication",
+            widget=plot_mois_publication(df),
         ),
         Plot(
             title="Mode de consolidation (opérationnel / financier)",

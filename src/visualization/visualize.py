@@ -119,7 +119,7 @@ def _get_hvplot(
 class LABELS:
     n_salaries = "Nb. salariés ou agents"
     n_bilans = "Nb. bilans déposés"
-    n_entites = "Nb. entités ayant déposé\n au moins un bilan"
+    n_entites = "Nb. entités ayant déposé\nau moins un bilan"
 
 
 _LABELS_NUNIQUE = {
@@ -135,13 +135,21 @@ def df_nunique(df, groupby: str, sort=True):
     return x
 
 
-def plot_nunique(df, groupby: str, sort=True, opts=None, rot=90):
+def plot_nunique(
+    df,
+    groupby: str,
+    *,
+    y=(LABELS.n_bilans, LABELS.n_entites),
+    sort=True,
+    opts=None,
+    rot=90,
+):
     x = df_nunique(df, groupby, sort)
     if opts is None:
         opts = dict(multi_level=False, **PLOT_OPTS)
     x = x.plot(
         x=groupby,
-        y=[LABELS.n_bilans, LABELS.n_entites],
+        y=y,
         kind="bar",
         rot=rot,
     )

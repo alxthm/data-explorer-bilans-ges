@@ -1,3 +1,4 @@
+import argparse
 import hvplot
 import shutil
 from pathlib import Path
@@ -6,6 +7,8 @@ from src.visualization.panel_figures.profiles import (
     TailleEntreprise,
     get_df,
     plot_type_structure,
+    plot_annee_publication,
+    plot_mois_publication,
 )
 
 EXPORT_FOLDER = Path(
@@ -13,19 +16,17 @@ EXPORT_FOLDER = Path(
 )
 
 
-def profils_entreprises(df):
-    root = EXPORT_FOLDER / "01-profils-entreprises/img"
+def gen_images_01(df, root):
     shutil.rmtree(root, ignore_errors=True)
+    root.mkdir(parents=True)
 
-    # Blog post 01
-    (root / "01").mkdir(parents=True)
     i = 0
     hvplot.save(
         plot_type_structure(df).opts(
             title="Type de structures ayant déposé des\n"
             "bilans GES sur le site de l'ADEME"
         ),
-        filename=root / f"01/{i:2d}-type-structures.png",
+        filename=root / f"{i:2d}-type-structures.png",
         toolbar=False,
     )
     i += 1
@@ -42,16 +43,51 @@ def profils_entreprises(df):
             TailleEntreprise(df)
             .plot(type_structure=type_structure)
             .opts(title=f"Bilans GES déposés sur le site de l'ADEME {txt}"),
-            filename=root / f"01/{i:2d}-tailles-{type_structure}.png",
+            filename=root / f"{i:2d}-tailles-{type_structure}.png",
             toolbar=False,
         )
         i += 1
 
 
-def main():
+def gen_images_02(df, root):
+    shutil.rmtree(root, ignore_errors=True)
+    root.mkdir(parents=True)
+    i = 0
+    hvplot.save(
+        plot_annee_publication(df).opts(
+            title="Bilans GES déposés sur le site de l'ADEME, par année de publication\n"
+            "et par année de reporting"
+        ),
+        filename=root / f"{i:2d}-annee-publication.png",
+        toolbar=False,
+    )
+    i += 1
+    hvplot.save(
+        plot_mois_publication(df).opts(
+            title="Bilans GES déposés sur le site de l'ADEME, par mois de publication"
+        ),
+        filename=root / f"{i:2d}-mois-publication.png",
+        toolbar=False,
+    )
+
+
+def profils_entreprises(df, blog_post):
+    root = EXPORT_FOLDER / "01-profils-entreprises/img"
+
+    if "01" in blog_post:
+        gen_images_01(df, root / "01")
+
+    if "02" in blog_post:
+        gen_images_02(df, root / "02")
+
+
+def main(blog_posts):
     df = get_df()
-    profils_entreprises(df)
+    profils_entreprises(df, blog_posts)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("blog_posts", nargs="+")
+    args = parser.parse_args()
+    main(args.blog_posts)
