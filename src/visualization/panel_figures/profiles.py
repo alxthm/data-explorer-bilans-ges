@@ -21,6 +21,9 @@ def get_df():
     df = pd.read_csv(DATA_PATH / "processed/bilans-ges-all.csv")
     # remove unnecessary columns for performance and readability
     df = df[[c for c in df.columns if "Emissions" not in c]]
+
+    df.month_publication = pd.to_datetime(df.month_publication)
+    df[LABELS.annee_publication] = df.month_publication.dt.year
     return df
 
 
@@ -93,16 +96,12 @@ class TailleEntreprise:
 
 
 def plot_annee_publication(df):
-    class L:
-        annee_publication = "Année de publication"
-        annee_reporting_rel = "Année de reporting (relative, digit)"
-        annee_reporting_rel_label = "Année de reporting (relative)"
+    x = df.rename(columns=_LABELS_NUNIQUE)
 
     # Compute the reporting year relative to publication year
-    x = df.rename(columns=_LABELS_NUNIQUE)
-    x.month_publication = pd.to_datetime(x.month_publication)
-    x[L.annee_publication] = x.month_publication.dt.year
-    x[L.annee_reporting_rel] = x["Année de reporting"] - x[L.annee_publication]
+    x[LABELS.annee_reporting_rel] = (
+        x["Année de reporting"] - x[LABELS.annee_publication]
+    )
 
     # Get a nice label for that
     def label_n(n):
@@ -116,11 +115,14 @@ def plot_annee_publication(df):
             return "< N-5"
         return f"N-{abs(n)}"
 
-    x[L.annee_reporting_rel_label] = x[L.annee_reporting_rel].map(label_n)
+    df[LABELS.annee_reporting_rel] = (
+        df["Année de reporting"] - df[LABELS.annee_publication]
+    )
+    x[LABELS.annee_reporting_rel_label] = x[LABELS.annee_reporting_rel].map(label_n)
 
     # build a custom colormap: the last value is red on purpose, to indicate
     # that '> N' is not a normal value
-    n_labels = x[L.annee_reporting_rel_label].nunique()
+    n_labels = x[LABELS.annee_reporting_rel_label].nunique()
     cmap = process_cmap("blues", ncolors=n_labels - 1) + ["darkred"]
 
     def hook(plot, element):
@@ -128,10 +130,30 @@ def plot_annee_publication(df):
         # https://discourse.holoviz.org/t/removing-legend-title/1317/2
         plot.state.legend.title = "Année de reporting"
 
-    x = x.sort_values([L.annee_publication, L.annee_reporting_rel])
-    x = x.groupby([L.annee_publication, L.annee_reporting_rel_label], sort=False)
+    x = x.sort_values([LABELS.annee_publication, LABELS.annee_reporting_rel])
+    x = x.groupby(
+        [LABELS.annee_publication, LABELS.annee_reporting_rel_label], sort=False
+    )
     x = x[LABELS.n_bilans].nunique()
     return x.plot(kind="bar", stacked=True, cmap=cmap).opts(**PLOT_OPTS, hooks=[hook])
+
+
+def plot_annee_bilan(df):
+    x = df.rename(columns=_LABELS_NUNIQUE)
+    x = x.rename(
+        columns={
+            LABELS.annee_publication: "publication",
+            "Année de reporting": "reporting",
+        }
+    )
+    x = x.melt(
+        id_vars=[LABELS.n_bilans],
+        value_vars=["publication", "reporting"],
+        var_name="Année de",
+        value_name="Année",
+    )
+    x = x.groupby(["Année", "Année de"])[LABELS.n_bilans].nunique()
+    return x.plot(kind="bar", rot=90).opts(**PLOT_OPTS, multi_level=False)
 
 
 def plot_mois_publication(df):
@@ -176,13 +198,17 @@ def _get_plots(df):
             description=TailleEntreprise(df).description(),
         ),
         Plot(
-            title="Année de publication",
-            widget=plot_annee_publication(df),
+            title="Répartition des bilans par année",
+            widget=plot_annee_bilan(df),
             description="La date de publication correspond à la date à laquelle un bilan GES "
             "est mis en ligne sur le site de l'ADEME.\n"
-            "L'année de reporting correspond à l'année pour laquelle les émissions ont été calculées.\n\n"
-            "> Note: pour un tout petit nombre de bilans, l'année de reporting est plus grande que l'année de "
-            "publication (`> N`), ce qui pourrait être une erreur.",
+            "L'année de reporting correspond à l'année pour laquelle les émissions ont été calculées.",
+        ),
+        Plot(
+            title="Répartition des bilans par année",
+            widget=plot_annee_publication(df),
+            description="Note: pour un tout petit nombre de bilans, l'année de reporting est plus grande "
+            "que l'année de publication (`> N`), ce qui pourrait être une erreur.",
         ),
         Plot(
             title="Mois de publication",

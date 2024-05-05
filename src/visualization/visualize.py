@@ -120,7 +120,9 @@ class LABELS:
     n_salaries = "Nb. salariés ou agents"
     n_bilans = "Nb. bilans déposés"
     n_entites = "Nb. entités ayant déposé\nau moins un bilan"
-
+    annee_publication = "Année de publication"
+    annee_reporting_rel = "Année de reporting (relative, digit)"
+    annee_reporting_rel_label = "Année de reporting (relative)"
 
 _LABELS_NUNIQUE = {
     "Id": LABELS.n_bilans,
