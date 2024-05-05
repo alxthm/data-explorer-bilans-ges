@@ -185,6 +185,7 @@ def _secteur_activite_treemap(df):
 
 def _get_plots(df):
     return [
+        # Qui dépose des bilans GES sur le site de l'ADEME ?
         Plot(
             title="Type de structure",
             widget=plot_type_structure(df),
@@ -197,6 +198,7 @@ def _get_plots(df):
             widget=TailleEntreprise(df).widget(),
             description=TailleEntreprise(df).description(),
         ),
+        # Quand les bilans sont-ils publiés ?
         Plot(
             title="Répartition des bilans par année",
             widget=plot_annee_bilan(df),
@@ -214,14 +216,16 @@ def _get_plots(df):
             title="Mois de publication",
             widget=plot_mois_publication(df),
         ),
-        Plot(
-            title="Mode de consolidation (opérationnel / financier)",
-            widget=plot_nunique(df, "Mode de consolidation"),
-        ),
+        # Quels secteurs d'activités ?
         Plot(
             title="Secteur d'activité",
             widget=_secteur_activite_treemap(df),
             description="Nombre d'entités ayant publié au moins un bilan, par secteur d'activité",
+        ),
+        # Quel périmètre pour le bilan GES ?
+        Plot(
+            title="Mode de consolidation (opérationnel / financier)",
+            widget=plot_nunique(df, "Mode de consolidation"),
         ),
         Plot(
             title="Seuil d'importance retenu (%)",
@@ -229,16 +233,11 @@ def _get_plots(df):
             description="Todo: harmoniser ces données (seuil inversé dans certains cas)",
         ),
         Plot(
-            title="Aide diag décarbon'action",
-            widget=plot_nunique(df, "Aide diag décarbon'action"),
-            description="""
-    Pourquoi est-ce vide? car les données s'arrêtent le 28-09-2023 (https://data.ademe.fr/datasets/bilan-ges)
-    
-    Il serait potentiellement faisable de contacter l'ademe et/ou de scrapper le site pour des données plus a jour.
-    
-    En attendant, au 31/03/2024, le site a jour recense 171 bilans utilisant le diag decarbon'action
-            """,
+            title="Méthode BEGES (V4,V5)",
+            widget=yearly_evolution(df, "Méthode BEGES (V4,V5)"),
+            description="Parmi les entités ayant publié au moins un bilan, quelle méthode a été utilisée ?",
         ),
+        # Contraintes réglementaires et aides publiques
         Plot(
             title="Assujetti DPEF/PCAET ?",
             widget=yearly_evolution(df, "Assujetti DPEF/PCAET ?"),
@@ -250,9 +249,15 @@ def _get_plots(df):
             description="Parmi les entités ayant publié au moins un bilan, combien y étaient obligées ?",
         ),
         Plot(
-            title="Méthode BEGES (V4,V5)",
-            widget=yearly_evolution(df, "Méthode BEGES (V4,V5)"),
-            description="Parmi les entités ayant publié au moins un bilan, quelle méthode a été utilisée ?",
+            title="Aide diag décarbon'action",
+            widget=plot_nunique(df, "Aide diag décarbon'action"),
+            description="""
+    Pourquoi est-ce vide? car les données s'arrêtent le 28-09-2023 (https://data.ademe.fr/datasets/bilan-ges)
+
+    Il serait potentiellement faisable de contacter l'ademe et/ou de scrapper le site pour des données plus a jour.
+
+    En attendant, au 31/03/2024, le site a jour recense 171 bilans utilisant le diag decarbon'action
+            """,
         ),
     ]
 
