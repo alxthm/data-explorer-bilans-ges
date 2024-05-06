@@ -15,16 +15,41 @@ from src.visualization.visualize import (
     LABELS,
 )
 
+import textwrap
+
+
+def custom_wrap(s, width=20):
+    return "<br>".join(textwrap.wrap(s, width=width))
+
 
 @pn.cache
 def get_df():
-    df = pd.read_csv(DATA_PATH / "processed/bilans-ges-all.csv")
+    df = pd.read_csv(
+        DATA_PATH / "processed/bilans-ges-all.csv",
+        dtype={"naf2_code": str, "naf3_code": str, "naf4_code": str},
+    )
     # remove unnecessary columns for performance and readability
     df = df[[c for c in df.columns if "Emissions" not in c]]
 
     df.month_publication = pd.to_datetime(df.month_publication)
     df[LABELS.annee_publication] = df.month_publication.dt.year
     return df
+
+
+@pn.cache
+def get_df_ademe():
+    x = pd.read_csv(
+        DATA_PATH / "raw/rapport-beges-ademe-2022-annexe-1.csv", dtype={"Code NAF": str}
+    )
+    x["Taux de conformité"] = x["Taux de conformité"].str.rstrip("%").astype(float)
+    x = x[["Code NAF", "Nombre d'obligés", "Nombre conforme", "Taux de conformité"]]
+    x = x.rename(
+        columns={
+            "Code NAF": "naf2_code",
+            "Taux de conformité": "Taux de conformité (%)",
+        }
+    )
+    return x
 
 
 @dataclass
@@ -166,19 +191,66 @@ def plot_mois_publication(df):
     return x.plot(x="Mois de la publication", kind="bar").opts(**PLOT_OPTS)
 
 
-def _secteur_activite_treemap(df):
+def secteur_activite_n_entites_treemap(df):
+    cols = ["naf1", "naf2", "naf3", "naf4"]
     x = (
-        df.groupby(["naf1", "naf2", "naf3", "naf4", "naf5"])
+        df.groupby(cols + ["naf5"], dropna=False)
         .nunique()
         .rename(columns={"SIREN principal": LABELS.n_entites})[LABELS.n_entites]
         .reset_index()
+        .fillna("undefined")
     )
-    x["all"] = "all"  # in order to have a single root node
+
+    # wrap text so that it is more readable
+    for c in cols:
+        x[c] = x[c].map(custom_wrap)
+
     fig = px.treemap(
         x,
-        path=["all", "naf1", "naf2", "naf3", "naf4"],
+        path=[px.Constant("all")] + cols,
         values=LABELS.n_entites,
         hover_name=LABELS.n_entites,
+    )
+    fig.update_traces(hovertemplate=f"{LABELS.n_entites}: %{{value}}<br><br>%{{label}}")
+    fig.update_layout(width=1200, height=800)
+    return pn.pane.Plotly(fig)
+
+
+def secteur_activite_ratio_treemap(df):
+    x = df.rename(columns=_LABELS_NUNIQUE)
+    x = x.groupby(["naf1", "naf2", "naf2_code"]).nunique()[
+        [LABELS.n_bilans, LABELS.n_entites]
+    ]
+    x = x.reset_index()
+    x = pd.merge(x, get_df_ademe(), on="naf2_code", how="left")
+    x[LABELS.ratio_n_entites_n_obliges] = x[LABELS.n_entites] / x["Nombre d'obligés"]
+
+    # wrap text so that it is more readable
+    cols = ["naf1", "naf2"]
+    for c in cols:
+        x[c] = x[c].map(custom_wrap)
+
+    fig = px.treemap(
+        x,
+        path=[px.Constant("all")] + cols,
+        values="Nombre d'obligés",
+        custom_data=LABELS.n_entites,
+        color=LABELS.ratio_n_entites_n_obliges,
+        color_continuous_scale="BrBg",
+        color_continuous_midpoint=1.0,
+        range_color=(0, 2),
+    )
+    fig.update_traces(
+        hovertemplate=f"{LABELS.n_entites}: %{{customdata[0]}}<br>"
+        f"Nombre d'obligés: %{{value}}<br>"
+        f"{LABELS.ratio_n_entites_n_obliges}: %{{color:.2f}}<br><br>"
+        f"%{{label}}"
+    )
+    fig.update_layout(
+        width=1200,
+        height=800,
+        coloraxis_colorbar_orientation="h",
+        coloraxis_colorbar_y=-0.15,
     )
     return pn.pane.Plotly(fig)
 
@@ -219,8 +291,26 @@ def _get_plots(df):
         # Quels secteurs d'activités ?
         Plot(
             title="Secteur d'activité",
-            widget=_secteur_activite_treemap(df),
-            description="Nombre d'entités ayant publié au moins un bilan, par secteur d'activité",
+            widget=secteur_activite_n_entites_treemap(df),
+            description="Nombre d'entités ayant publié au moins un bilan, par secteur d'activité "
+            "([NAF](https://www.insee.fr/fr/information/2120875)).\n"
+            "Note: un petit nombre d'entités ont indiqué différents codes NAF d'un bilan à l'autre, dans ce cas là"
+            " uniquement le dernier code NAF en date est pris en compte",
+        ),
+        Plot(
+            title="Secteur d'activité",
+            widget=secteur_activite_ratio_treemap(df),
+            description="Ratio du nombre d'entités ayant publié au moins un bilan sur le nombre d'entités"
+            ' "obligées", par secteur.\n\n'
+            "Notes:\n"
+            "* Le nombre d'entités obligées (c'est à dire, soumises à la réglementation BEGES) est tiré du rapport "
+            "de l'ADEME: [Evaluation 2021 de la Réglementation des Bilans d'Emissions de Gaz à Effet de Serre]"
+            "(https://librairie.ademe.fr/changement-climatique-et-energie/5919-evaluation-2021-de-la-reglementation-des-bilans-d-emissions-de-gaz-a-effet-de-serre.html),"
+            " Annexe 1. "
+            "Ces données sont en principe valables uniquement pour l'année 2021, mais le rapport indique relativement "
+            "peu de changements d'une année à l'autre.\n"
+            "* La taille des blocs est déterminée par le *nombre d'entités obligées* (et non pas par l'importance du "
+            "secteur en termes d'émissions par exemple).",
         ),
         # Quel périmètre pour le bilan GES ?
         Plot(

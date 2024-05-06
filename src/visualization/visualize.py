@@ -123,6 +123,8 @@ class LABELS:
     annee_publication = "Année de publication"
     annee_reporting_rel = "Année de reporting (relative, digit)"
     annee_reporting_rel_label = "Année de reporting (relative)"
+    ratio_n_entites_n_obliges = "Ratio nb. entités / nb. obligés"
+
 
 _LABELS_NUNIQUE = {
     "Id": LABELS.n_bilans,
