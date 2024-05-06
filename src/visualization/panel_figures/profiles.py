@@ -10,7 +10,6 @@ from src.data.make_dataset import DATA_PATH
 from src.visualization.visualize import (
     PLOT_OPTS,
     plot_nunique,
-    yearly_evolution,
     _LABELS_NUNIQUE,
     LABELS,
 )
@@ -312,43 +311,43 @@ def _get_plots(df):
             "* La taille des blocs est déterminée par le *nombre d'entités obligées* (et non pas par l'importance du "
             "secteur en termes d'émissions par exemple).",
         ),
-        # Quel périmètre pour le bilan GES ?
-        Plot(
-            title="Mode de consolidation (opérationnel / financier)",
-            widget=plot_nunique(df, "Mode de consolidation"),
-        ),
-        Plot(
-            title="Seuil d'importance retenu (%)",
-            widget=plot_nunique(df, "Seuil d'importance retenu (%)"),
-            description="Todo: harmoniser ces données (seuil inversé dans certains cas)",
-        ),
-        Plot(
-            title="Méthode BEGES (V4,V5)",
-            widget=yearly_evolution(df, "Méthode BEGES (V4,V5)"),
-            description="Parmi les entités ayant publié au moins un bilan, quelle méthode a été utilisée ?",
-        ),
-        # Contraintes réglementaires et aides publiques
-        Plot(
-            title="Assujetti DPEF/PCAET ?",
-            widget=yearly_evolution(df, "Assujetti DPEF/PCAET ?"),
-            description="Parmi les entités ayant publié au moins un bilan, combien sont assujetties au DPEF ou PCAET ?",
-        ),
-        Plot(
-            title="Bilan obligatoire ?",
-            widget=yearly_evolution(df, "Structure obligée"),
-            description="Parmi les entités ayant publié au moins un bilan, combien y étaient obligées ?",
-        ),
-        Plot(
-            title="Aide diag décarbon'action",
-            widget=plot_nunique(df, "Aide diag décarbon'action"),
-            description="""
-    Pourquoi est-ce vide? car les données s'arrêtent le 28-09-2023 (https://data.ademe.fr/datasets/bilan-ges)
-
-    Il serait potentiellement faisable de contacter l'ademe et/ou de scrapper le site pour des données plus a jour.
-
-    En attendant, au 31/03/2024, le site a jour recense 171 bilans utilisant le diag decarbon'action
-            """,
-        ),
+        #     # Quel périmètre pour le bilan GES ?
+        #     Plot(
+        #         title="Mode de consolidation (opérationnel / financier)",
+        #         widget=plot_nunique(df, "Mode de consolidation"),
+        #     ),
+        #     Plot(
+        #         title="Seuil d'importance retenu (%)",
+        #         widget=plot_nunique(df, "Seuil d'importance retenu (%)"),
+        #         description="Todo: harmoniser ces données (seuil inversé dans certains cas)",
+        #     ),
+        #     Plot(
+        #         title="Méthode BEGES (V4,V5)",
+        #         widget=yearly_evolution(df, "Méthode BEGES (V4,V5)"),
+        #         description="Parmi les entités ayant publié au moins un bilan, quelle méthode a été utilisée ?",
+        #     ),
+        #     # Contraintes réglementaires et aides publiques
+        #     Plot(
+        #         title="Assujetti DPEF/PCAET ?",
+        #         widget=yearly_evolution(df, "Assujetti DPEF/PCAET ?"),
+        #         description="Parmi les entités ayant publié au moins un bilan, combien sont assujetties au DPEF ou PCAET ?",
+        #     ),
+        #     Plot(
+        #         title="Bilan obligatoire ?",
+        #         widget=yearly_evolution(df, "Structure obligée"),
+        #         description="Parmi les entités ayant publié au moins un bilan, combien y étaient obligées ?",
+        #     ),
+        #     Plot(
+        #         title="Aide diag décarbon'action",
+        #         widget=plot_nunique(df, "Aide diag décarbon'action"),
+        #         description="""
+        # Pourquoi est-ce vide? car les données s'arrêtent le 28-09-2023 (https://data.ademe.fr/datasets/bilan-ges)
+        #
+        # Il serait potentiellement faisable de contacter l'ademe et/ou de scrapper le site pour des données plus a jour.
+        #
+        # En attendant, au 31/03/2024, le site a jour recense 171 bilans utilisant le diag decarbon'action
+        #         """,
+        #     ),
     ]
 
 
