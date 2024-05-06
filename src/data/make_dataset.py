@@ -71,6 +71,35 @@ def _nb_salaries_max(x: Optional[str]):
     return int(j)
 
 
+def get_last_naf5(df):
+    """
+    Return a dataframe with a unique NAF5 per entity, for entities that have multiple NAF5
+    in the database.
+
+    Returns:
+        A dataframe with 2 columns (SIREN / naf5). Each row corresponds to an entity that has
+        at least 2 different naf5 number in the database (e.g. 2 different valid naf5, or 1 nan and 1 valid naf5).
+        The naf5 column corresponds to the last valid naf5 in the database for this entity.
+    """
+    # SIREN is properly defined for all entries, so no need to specify dropna=False when grouping by SIREN
+
+    y = df[["SIREN principal", "naf5", "month_publication"]]
+    # call fillna because NaN acts weirdly with nunique()
+    y = y.fillna("nan")
+    # build the series of corrected naf5: focus on SIREN numbers that have more than 1 naf value
+    z = y.groupby("SIREN principal").naf5.nunique()
+    y = y.set_index("SIREN principal").loc[z > 1]
+    # if there is a nan naf5, drop it and rely on the other SIREN number(s)
+    # todo: fix this (for some reason it does not include entities with a nan naf5 in the output dict...)
+    # y = y.drop(y[y.naf5 == "nan"].index)
+    # when there are multiple valid naf5 values defined, take the last one (according to the publication date)
+    y = y.sort_values(["SIREN principal", "month_publication"])
+    y = y.groupby("SIREN principal").last()
+
+    y = y.drop(columns=["month_publication"])
+    return y
+
+
 def enrich_df(df_raw: pd.DataFrame) -> pd.DataFrame:
     df = df_raw.copy()
 
@@ -82,26 +111,44 @@ def enrich_df(df_raw: pd.DataFrame) -> pd.DataFrame:
     # arbitrary value for 10000+ companies
     df.loc[df.nb_salaries_max.isnull(), "nb_salaries_mean"] = 15000
 
-    # Get a readable name for NAF
-    df["naf5"] = df["APE(NAF) associé"].map(
-        lambda x: None if pd.isna(x) else f"{x[:2]}.{x[2:]}"
-    )
-    _naf5_to_nafi = _load_naf5_to_nafi_data()
-    _naf_to_libelle = _load_naf_to_libelle_data()
-
-    def naf_to_libelle(naf5: Optional[str], niv: int) -> Optional[str]:
-        if naf5 is None or naf5 not in _naf5_to_nafi[f"NIV{niv}"]:
-            return None
-        nafi = _naf5_to_nafi[f"NIV{niv}"][naf5]
-        return _naf_to_libelle[f"NIV{niv}"][nafi]
-
-    for i in range(1, 5):
-        df[f"naf{i}"] = df.naf5.map(lambda x: naf_to_libelle(x, niv=i))
-
     # Convert to a python date (month is enough)
     df["month_publication"] = pd.to_datetime(
         df["Date de publication"], dayfirst=True
     ).dt.to_period("M")
+
+    df["naf5"] = df["APE(NAF) associé"].map(
+        lambda x: None if pd.isna(x) else f"{x[:2]}.{x[2:]}"
+    )
+
+    # A few entities have multiple naf values registered (over multiple entries).
+    # Introduce a 'naf5_last' column with a unique naf5 value per SIREN (typically the last one)
+    d = get_last_naf5(df).to_dict()["naf5"]
+
+    def _f(j):
+        if j["SIREN principal"] in d:
+            return d[j["SIREN principal"]]
+        return j["naf5"]
+
+    df["naf5_last"] = df.apply(_f, axis=1)
+    df = df.rename(columns={"naf5_last": "naf5", "naf5": "naf5_non_unique"})
+
+    # Get a readable name for NAF
+    _naf5_to_nafi = _load_naf5_to_nafi_data()
+    _naf_to_libelle = _load_naf_to_libelle_data()
+
+    def get_nafi(naf5: Optional[str], niv: int) -> Optional[str]:
+        if naf5 is None or naf5 not in _naf5_to_nafi[f"NIV{niv}"]:
+            return None
+        return _naf5_to_nafi[f"NIV{niv}"][naf5]
+
+    def naf_to_libelle(naf5: Optional[str], niv: int) -> Optional[str]:
+        if naf5 is None or naf5 not in _naf5_to_nafi[f"NIV{niv}"]:
+            return None
+        return _naf_to_libelle[f"NIV{niv}"][get_nafi(naf5, niv)]
+
+    for i in range(1, 5):
+        df[f"naf{i}"] = df.naf5.map(lambda x: naf_to_libelle(x, niv=i))
+        df[f"naf{i}_code"] = df.naf5.map(lambda x: get_nafi(x, niv=i))
     return df
 
 
