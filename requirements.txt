@@ -10,6 +10,8 @@ matplotlib
 hvplot
 plotly
 bokeh
+panel
+param
 requests
 xlrd  # to read excel files
 scipy  # for kde plots
