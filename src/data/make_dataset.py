@@ -218,7 +218,7 @@ def transform_to_benchmark_df(df_enriched: pd.DataFrame) -> pd.DataFrame:
 
     df["emissions_par_salarie"] = df["emissions"] / df["nb_salaries_mean"]
     # clip to 1 (instead of 0) to be able to apply log
-    df["emissions_clipped"] = df["emissions"].clip(lower=1.0)
+    df["emissions_clipped"] = df["emissions"].clip(lower=1e-3)
     df["poste_name"] = df["poste_emissions"].map(
         lambda x: poste_code_to_name["nom_poste"][x]
     )
