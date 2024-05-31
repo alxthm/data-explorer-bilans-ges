@@ -281,7 +281,7 @@ def _get_plots(df):
             title="Répartition des bilans par année",
             widget=plot_annee_publication(df),
             description="Note: pour un tout petit nombre de bilans, l'année de reporting est plus grande "
-            "que l'année de publication (`> N`), ce qui pourrait être une erreur.",
+            "que l'année de publication (`> N`). Peut-être une erreur dans les données sources ?",
         ),
         Plot(
             title="Mois de publication",

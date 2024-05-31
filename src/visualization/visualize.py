@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import panel as pn
 import holoviews as hv
-from hvplot import hvPlot
 
 import hvplot.pandas  # noqa
 
@@ -60,62 +59,6 @@ def _get_upper_bar(vals: np.ndarray):
     return upper
 
 
-def _get_hvplot(
-    df: pd.DataFrame,
-    *,
-    secteur_activite: str,
-    annee: str,
-    mode_consolidation: str,
-    plot_col: str,
-    group_by: list[str],
-):
-    # filter plot data
-    x = df.copy()
-    if secteur_activite != "all":
-        x = x[x.naf1 == secteur_activite]
-    if mode_consolidation != "all":
-        x = x[x["Mode de consolidation"] == mode_consolidation]
-    if annee != "all":
-        x = x[x["Année de reporting"] == annee]
-
-    if plot_col == "emissions_clipped":
-        opts = dict(
-            ylabel="tCO2 eq.",
-            logx=True,
-            **PLOT_OPTS,
-        )
-    elif plot_col == "emissions_par_salarie":
-        # compute the upper bound of all whisker plots
-        upper = 1.0
-        for sub_poste in x[group_by[-1]].unique():
-            if sub_poste is None:
-                continue
-            y = x[(x[group_by[-1]] == sub_poste) & ~pd.isna(x.emissions_par_salarie)]
-            upper = max(upper, _get_upper_bar(y.emissions_par_salarie.values))
-
-        opts = dict(
-            ylabel="tCO2 eq. / salarié",
-            ylim=(-1.0, upper + 1.0),
-            **PLOT_OPTS,
-        )
-    else:
-        raise ValueError(f"Invalid {plot_col=}")
-
-    return (
-        hvPlot(x)
-        .box(
-            by=group_by,
-            y=plot_col,
-            fields={"naf1": {"default": "all"}},
-            # Not sure the difference between this and ylim, in both cases it does not seem to reset the axes
-            # when replotting (only the last max value is taken into account)
-            # ).redim(
-            #    emissions_par_salarie=hv.Dimension('emissions_par_salarie', range=(-1., upper + 1.))
-        )
-        .opts(title=f"n_bilans={x.Id.nunique()}", invert_axes=True, **opts)
-    )
-
-
 class LABELS:
     n_salaries = "Nb. salariés ou agents"
     n_bilans = "Nb. bilans déposés"
@@ -124,6 +67,11 @@ class LABELS:
     annee_reporting_rel = "Année de reporting (relative, digit)"
     annee_reporting_rel_label = "Année de reporting (relative)"
     ratio_n_entites_n_obliges = "Ratio nb. entités / nb. obligés"
+    secteur_activite = "Secteur d'activité (NAF1)"
+    category_emissions = "Catégorie d'émissions"
+    poste_emissions = "Poste d'émissions"
+    emissions_par_salarie = "Émission_par_salarié"
+    emissions_total = "Émissions_totales"
 
 
 _LABELS_NUNIQUE = {
