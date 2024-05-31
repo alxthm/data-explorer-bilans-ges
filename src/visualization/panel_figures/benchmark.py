@@ -125,24 +125,34 @@ def plot_emissions_par_secteur(
     plot_col: str,
 ):
     x = df.copy()
-    y_axis = LABELS.poste_emissions
+    group_by = LABELS.poste_emissions
 
     box = x.plot(
         kind="box",
         # Note: it would be possible here to pass `by=[LABELS.categorie_emissions, LABELS.poste_emissions]`
         # in order to group postes by category (with a multi-level index). But this does not work when combining
         # with a regular scatter plot.
-        by=y_axis,
+        by=group_by,
         y=plot_col,
         # fields={"naf1": {"default": "all"}},
         # hover_cols="all",
     )
-    box_opts = dict(
-        ylabel="tCO2 eq. / salarié",
-        ylim=(0, _boxwhisker_upper_bound(x) + 1.0),
-    )
 
-    y = get_valid_postes_percentage(x, y_axis=y_axis)
+    match plot_col:
+        case LABELS.emissions_par_salarie:
+            box_opts = dict(
+                ylabel="tCO2 eq. / salarié",
+                ylim=(0, _boxwhisker_upper_bound(x) + 1.0),
+            )
+        case LABELS.emissions_total:
+            box_opts = dict(
+                ylabel="tCO2 eq.",
+                logx=True,
+            )
+        case _:
+            raise ValueError(plot_col)
+
+    y = get_valid_postes_percentage(x, group_by=group_by)
     scatter = y.plot(
         kind="scatter",
         y="Part de bilans incluant le poste d'émissions (%)",
@@ -211,12 +221,12 @@ def plot_secondary(plot, element):
     glyph_last.x_range_name = right_axis_name
 
 
-def get_valid_postes_percentage(df, y_axis: str):
+def get_valid_postes_percentage(df, group_by: str):
     n_bilans = df["Id"].nunique()
 
     # there can be NaN or 0 values: we consider both as empty data
     x = (
-        df.groupby(y_axis)
+        df.groupby(group_by)
         .emissions.agg(lambda i: i.ne(0, fill_value=0).sum())
         .rename("Nb. de bilans incluant le poste d'émissions")
     )
