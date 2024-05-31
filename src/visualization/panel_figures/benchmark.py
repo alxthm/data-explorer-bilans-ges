@@ -1,7 +1,6 @@
 import pandas as pd
 import panel as pn
 import param
-from bokeh.models import Range1d, LinearAxis
 from panel.widgets import MultiChoice
 
 from src.data.make_dataset import DATA_PATH
@@ -21,7 +20,7 @@ def get_df() -> pd.DataFrame:
             "poste_name": LABELS.category_emissions,
             "sub_poste_name": LABELS.poste_emissions,
             "emissions_par_salarie": LABELS.emissions_par_salarie,
-            "emissions_clipped": LABELS.emissions_total,
+            "emissions": LABELS.emissions_total,
         }
     )
     return df
@@ -69,6 +68,10 @@ def get_benchmark_dashboard():
         name="Indicateur",
         options=[LABELS.emissions_par_salarie, LABELS.emissions_total],
     )
+    group_by = pn.widgets.Select(
+        name="Group by",
+        options=[LABELS.poste_emissions, "Type de structure", LABELS.secteur_activite],
+    )
     widgets = {key: get_multi_choice(df, **kw) for key, kw in filters.items()}
     # nested parameters don't seem to work well, so we pass all options directly as kwarg
     kwargs = dict(
@@ -78,23 +81,22 @@ def get_benchmark_dashboard():
 
     data = pn.bind(filter_options, df=df, secteur_activite="all", **kwargs)
     plot_emissions_widget = pn.bind(
-        plot_emissions,
-        df=data,
-        plot_col=plot_col,
+        plot_emissions, df=data, plot_col=plot_col, group_by=group_by
     )
-    plot_parts_bilans_widget = pn.bind(plot_parts_bilans, df=data)
+    plot_n_bilans_widget = pn.bind(plot_n_bilans, df=data, group_by=group_by)
     n_bilans_widget = pn.bind(n_bilans, df=data)
 
     return pn.Row(
         pn.WidgetBox(
             plot_col,
+            group_by,
             *(w.widget() for w in widgets.values()),
             margin=10,
         ),
         pn.Column(
             n_bilans_widget,
             plot_emissions_widget,
-            plot_parts_bilans_widget,
+            plot_n_bilans_widget,
         ),
     )
 
@@ -128,9 +130,9 @@ def plot_emissions(
     df: pd.DataFrame,
     *,
     plot_col: str,
+    group_by: str,
 ):
     x = df.copy()
-    group_by = LABELS.poste_emissions
 
     box = x.plot(
         kind="box",
@@ -161,21 +163,33 @@ def plot_emissions(
         title="Émissions",
         invert_axes=True,
         # This is important to properly clear the axes when changing widget options (otherwise, both the emission
-        # and the parts_bilans plot keep their y-axis forever, even after un-selecting some options)
+        # and the n_bilans plot keep their y-axis forever, even after un-selecting some options)
         shared_axes=False,
         **opts,
         **PLOT_OPTS,
     )
 
 
-def plot_parts_bilans(df: pd.DataFrame):
-    x = df.copy()
-    group_by = LABELS.poste_emissions
+def plot_n_bilans(df: pd.DataFrame, group_by: str):
+    x = df.groupby(group_by)
 
-    y = get_valid_postes_percentage(x, group_by=group_by)
-    fig = y.plot(
+    if group_by == LABELS.poste_emissions:
+        n_bilan_label = "Nb. de bilans incluant le poste d'émissions"
+        part_bilan_label = "Part de bilans incluant le poste d'émissions (%)"
+        y_col = part_bilan_label
+
+        # there can be NaN or 0 values in 'emissions': we consider both as empty data
+        x = x[LABELS.emissions_total].agg(lambda i: i.ne(0, fill_value=0).sum()).rename(n_bilan_label)
+        x = x.to_frame()
+        n_bilans = df["Id"].nunique()
+        x[part_bilan_label] = x[n_bilan_label] / n_bilans * 100
+    else:
+        y_col = "Nb. de bilans"
+        x = x.Id.nunique().rename(y_col)
+
+    fig = x.plot(
         kind="bar",
-        y="Part de bilans incluant le poste d'émissions (%)",
+        y=y_col,
         # display all the data (absolute nb. in addition of the %) in the hover toolbox
         hover_cols="all",
     )
@@ -185,10 +199,6 @@ def plot_parts_bilans(df: pd.DataFrame):
         invert_axes=True,
         shared_axes=False,
         alpha=0.5,
-        # ylim=(0, None),
-        # color="red",
-        # marker="x",
-        # size=10,
         **PLOT_OPTS,
     )
 
@@ -199,64 +209,6 @@ def n_bilans(df: pd.DataFrame):
 
 # Helper functions
 
-
-def plot_secondary(plot, element):
-    """
-    Hook to plot data on a secondary (twin) axis on a Holoviews Plot with Bokeh backend.
-    More info:
-    - http://holoviews.org/user_guide/Customizing_Plots.html#plot-hooks
-    - https://docs.bokeh.org/en/latest/docs/user_guide/plotting.html#twin-axes
-
-    Necessary because multi_index does not work with invert_axes=True, or with the rot option
-    """
-    fig = plot.state
-    glyph_first = fig.renderers[0]  # will be the original plot
-    glyph_last = fig.renderers[-1]  # will be the new plot
-    right_axis_name = "twiny"
-    # Create both axes if right axis does not exist
-    if right_axis_name not in fig.extra_x_ranges.keys():
-        # Recreate primary axis (left)
-        # y_first_name = glyph_first.glyph.y
-        # y_first_min = glyph_first.data_source.data[y_first_name].min()
-        # y_first_max = glyph_first.data_source.data[y_first_name].max()
-        # y_first_offset = (y_first_max - y_first_min) * 0.1
-        # fig.y_range = Range1d(
-        #    start=y_first_min - y_first_offset,
-        #    end=y_first_max + y_first_offset
-        # )
-        # fig.y_range.name = glyph_first.y_range_name
-        # Create secondary axis (right)
-
-        # replace all y by x if inverted (and right -> below)
-        y_last_name = glyph_last.glyph.x
-        y_last_min = glyph_last.data_source.data[y_last_name].min()
-        y_last_max = glyph_last.data_source.data[y_last_name].max()
-        y_last_offset = (y_last_max - y_last_min) * 0.1
-        fig.extra_x_ranges = {
-            right_axis_name: Range1d(start=0, end=y_last_max + y_last_offset)
-        }
-        fig.add_layout(
-            LinearAxis(x_range_name=right_axis_name, axis_label=glyph_last.glyph.x),
-            "below",
-        )
-    # Set right axis for the last glyph added to the figure
-    glyph_last.x_range_name = right_axis_name
-
-
-def get_valid_postes_percentage(df, group_by: str):
-    n_bilans = df["Id"].nunique()
-
-    # there can be NaN or 0 values: we consider both as empty data
-    x = (
-        df.groupby(group_by)
-        .emissions.agg(lambda i: i.ne(0, fill_value=0).sum())
-        .rename("Nb. de bilans incluant le poste d'émissions")
-    )
-    x = x.to_frame()
-    x["Part de bilans incluant le poste d'émissions (%)"] = (
-        x["Nb. de bilans incluant le poste d'émissions"] / n_bilans * 100
-    )
-    return x
 
 
 def _boxwhisker_upper_bound(x):
