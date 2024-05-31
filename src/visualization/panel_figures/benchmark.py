@@ -1,4 +1,3 @@
-import holoviews as hv
 import pandas as pd
 import panel as pn
 import param
@@ -78,11 +77,13 @@ def get_benchmark_dashboard():
     )
 
     data = pn.bind(filter_options, df=df, secteur_activite="all", **kwargs)
-    plot_by_secteur_activite = pn.bind(
-        plot_emissions_par_secteur,
+    plot_emissions_widget = pn.bind(
+        plot_emissions,
         df=data,
         plot_col=plot_col,
     )
+    plot_parts_bilans_widget = pn.bind(plot_parts_bilans, df=data)
+    n_bilans_widget = pn.bind(n_bilans, df=data)
 
     return pn.Row(
         pn.WidgetBox(
@@ -90,7 +91,11 @@ def get_benchmark_dashboard():
             *(w.widget() for w in widgets.values()),
             margin=10,
         ),
-        plot_by_secteur_activite,
+        pn.Column(
+            n_bilans_widget,
+            plot_emissions_widget,
+            plot_parts_bilans_widget,
+        ),
     )
 
 
@@ -119,7 +124,7 @@ def filter_options(
     return x
 
 
-def plot_emissions_par_secteur(
+def plot_emissions(
     df: pd.DataFrame,
     *,
     plot_col: str,
@@ -140,39 +145,56 @@ def plot_emissions_par_secteur(
 
     match plot_col:
         case LABELS.emissions_par_salarie:
-            box_opts = dict(
+            opts = dict(
                 ylabel="tCO2 eq. / salarié",
                 ylim=(0, _boxwhisker_upper_bound(x) + 1.0),
             )
         case LABELS.emissions_total:
-            box_opts = dict(
+            opts = dict(
                 ylabel="tCO2 eq.",
                 logx=True,
             )
         case _:
             raise ValueError(plot_col)
 
+    return box.opts(
+        title="Émissions",
+        invert_axes=True,
+        # This is important to properly clear the axes when changing widget options (otherwise, both the emission
+        # and the parts_bilans plot keep their y-axis forever, even after un-selecting some options)
+        shared_axes=False,
+        **opts,
+        **PLOT_OPTS,
+    )
+
+
+def plot_parts_bilans(df: pd.DataFrame):
+    x = df.copy()
+    group_by = LABELS.poste_emissions
+
     y = get_valid_postes_percentage(x, group_by=group_by)
-    scatter = y.plot(
-        kind="scatter",
+    fig = y.plot(
+        kind="bar",
         y="Part de bilans incluant le poste d'émissions (%)",
         # display all the data (absolute nb. in addition of the %) in the hover toolbox
         hover_cols="all",
     )
 
-    return (box * scatter).opts(
-        hv.opts(
-            title=f"n_bilans={x.Id.nunique()}",
-            invert_axes=True,
-            **PLOT_OPTS,
-            multi_y=False,
-        ),
-        # active_tools=['ywheel_zoom'],
-        hv.opts.BoxWhisker(**box_opts, show_legend=False),
-        hv.opts.Scatter(
-            ylim=(0, None), color="red", marker="x", size=10, hooks=[plot_secondary]
-        ),
+    return fig.opts(
+        title="Nb. de bilans",
+        invert_axes=True,
+        shared_axes=False,
+        alpha=0.5,
+        # ylim=(0, None),
+        # color="red",
+        # marker="x",
+        # size=10,
+        **PLOT_OPTS,
     )
+
+
+def n_bilans(df: pd.DataFrame):
+    return f"**Nb. total de bilans sélectionnés: {df.Id.nunique()}**"
 
 
 # Helper functions
