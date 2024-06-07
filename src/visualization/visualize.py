@@ -65,6 +65,7 @@ class LABELS:
     annee_reporting_rel = "Année de reporting (relative, digit)"
     annee_reporting_rel_label = "Année de reporting (relative)"
     ratio_n_entites_n_obliges = "Ratio nb. entités / nb. obligés"
+    type_structure = "Type de structure"
     secteur_activite = "Secteur d'activité (NAF1)"
     category_emissions = "Catégorie d'émissions"
     poste_emissions = "Poste d'émissions"

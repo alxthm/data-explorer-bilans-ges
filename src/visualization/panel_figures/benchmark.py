@@ -83,7 +83,7 @@ def get_multi_choice(df: pd.DataFrame, col: str, name=None, sort=False):
 
 
 filters = dict(
-    type_structure=dict(col="Type de structure"),
+    type_structure=dict(col=LABELS.type_structure),
     secteur_activite=dict(col=LABELS.secteur_activite),
     categorie_emissions=dict(col=LABELS.category_emissions),
     poste_emissions=dict(col=LABELS.poste_emissions),
@@ -101,7 +101,7 @@ def get_benchmark_dashboard():
     )
     group_by = pn.widgets.Select(
         name="Group by",
-        options=[LABELS.poste_emissions, "Type de structure", LABELS.secteur_activite],
+        options=[LABELS.poste_emissions, LABELS.type_structure, LABELS.secteur_activite],
     )
     widgets = {key: get_multi_choice(df, **kw) for key, kw in filters.items()}
     # nested parameters don't seem to work well, so we pass all options directly as kwarg
@@ -168,14 +168,16 @@ def filter_options(
         x = x[x[LABELS.secteur_activite] == secteur_activite]
 
     for key, opts in filters.items():
-        select_all: bool = kwargs[f"{key}_all"]
-        selected_options: list[str] = kwargs[f"{key}_options"]
+        select_all: bool = kwargs.get(f"{key}_all", True)
+        selected_options: list[str] = kwargs.get(f"{key}_options")
         col_name = opts["col"]
         if not select_all:
             x = x[x[col_name].isin(selected_options)]
 
     # drop nan values and zeros
-    x = x.fillna(0)
+    with pd.option_context("future.no_silent_downcasting", True):
+        # the context is just here to remove a pandas warning
+        x = x.fillna(0)
     x = x[x != 0]
 
     return x
@@ -225,7 +227,7 @@ def plot_emissions(
 
 
 def plot_n_bilans(df: pd.DataFrame, group_by: str):
-    x = df.groupby(group_by)
+    x = df.groupby(group_by, sort=False)
 
     if group_by == LABELS.poste_emissions:
         n_bilan_label = "Nb. de bilans incluant le poste d'émissions"
