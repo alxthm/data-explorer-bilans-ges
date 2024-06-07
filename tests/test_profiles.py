@@ -1,7 +1,11 @@
 import pytest
 
-from src.visualization.panel_figures.profiles import get_df, TailleEntreprise
-from src.visualization.visualize import df_nunique, LABELS
+from src.visualization.panel_figures.profiles import (
+    get_df,
+    TailleEntreprise,
+    df_nunique,
+)
+from src.visualization.visualize import LABELS
 
 # Total number of bilans GES in the database
 N_BILANS_TOTAL = 5639

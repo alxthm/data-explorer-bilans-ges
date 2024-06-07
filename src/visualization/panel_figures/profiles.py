@@ -8,13 +8,61 @@ import plotly.express as px
 
 from src.data.make_dataset import DATA_PATH
 from src.visualization.visualize import (
-    PLOT_OPTS,
-    plot_nunique,
-    _LABELS_NUNIQUE,
     LABELS,
 )
 
 import textwrap
+
+# Setting a max_width to Markdown components seems necessary to avoid stretching to the entire screen width.
+# For the plots in this page, don't bother with responsive=True, simply set the frame size.
+
+MAX_TEXT_WIDTH = 700
+SIZE = dict(frame_height=350, frame_width=600)
+
+# For our plotly treemaps, fix the height, but set the width to be responsive.
+#
+# When using autosize=True in plotly layout, the pn.Plotly component does not seem to have its height set properly.
+# As a workaround we specify it again when creating the pn.Plotly component
+
+PLOTLY_HEIGHT = 700
+PLOTLY_OPTS = dict(
+    autosize=True,
+    height=PLOTLY_HEIGHT,
+)
+
+_LABELS_NUNIQUE = {
+    "Id": LABELS.n_bilans,
+    "SIREN principal": LABELS.n_entites,
+}
+
+
+def df_nunique(df, groupby: str, sort=True):
+    x = df.groupby([groupby], as_index=False).nunique().rename(columns=_LABELS_NUNIQUE)
+    if sort:
+        x = x.sort_values(LABELS.n_bilans, ascending=False)
+    return x
+
+
+def plot_nunique(
+    df,
+    groupby: str,
+    *,
+    y=(LABELS.n_bilans, LABELS.n_entites),
+    sort=True,
+    opts=None,
+    rot=90,
+):
+    x = df_nunique(df, groupby, sort)
+    if opts is None:
+        opts = dict(multi_level=False)
+    x = x.plot(
+        x=groupby,
+        y=y,
+        kind="bar",
+        rot=rot,
+        **SIZE,
+    )
+    return x.opts(**opts, shared_axes=False)
 
 
 def custom_wrap(s, width=20):
@@ -57,6 +105,22 @@ class Plot:
     widget: Any  # hvplot plot or Panel widget
     description: Optional[str] = None
 
+    @property
+    def styles(self):
+        # Most widgets have a fixed size and should be put on the same row if there is space -> use fit-content.
+        # But plotly widgets have responsive width and are better displayed full-width -> use auto so that they always
+        # take the entire row.
+        flex_basis = (
+            "auto" if isinstance(self.widget, pn.pane.Plotly) else "fit-content"
+        )
+        return dict(
+            styles={
+                "flex": f"1 1 {flex_basis}",
+                "border": "1px solid WhiteSmoke",
+            },
+            margin=5,
+        )
+
 
 def plot_type_structure(df):
     return plot_nunique(df, "Type de structure", rot=45)
@@ -90,8 +154,9 @@ class TailleEntreprise:
             y=LABELS.n_bilans,
             kind="bar",
             rot=90,
+            **SIZE,
         )
-        return x.opts(multi_level=False, **PLOT_OPTS, shared_axes=False)
+        return x.opts(multi_level=False, shared_axes=False)
 
     def widget(self):
         type_structure_widget = pn.widgets.Select(
@@ -159,7 +224,7 @@ def plot_annee_publication(df):
         [LABELS.annee_publication, LABELS.annee_reporting_rel_label], sort=False
     )
     x = x[LABELS.n_bilans].nunique()
-    return x.plot(kind="bar", stacked=True, cmap=cmap).opts(**PLOT_OPTS, hooks=[hook])
+    return x.plot(kind="bar", stacked=True, cmap=cmap, **SIZE).opts(hooks=[hook])
 
 
 def plot_annee_bilan(df):
@@ -177,7 +242,7 @@ def plot_annee_bilan(df):
         value_name="Année",
     )
     x = x.groupby(["Année", "Année de"])[LABELS.n_bilans].nunique()
-    return x.plot(kind="bar", rot=90).opts(**PLOT_OPTS, multi_level=False)
+    return x.plot(kind="bar", rot=90, **SIZE).opts(multi_level=False)
 
 
 def plot_mois_publication(df):
@@ -187,7 +252,7 @@ def plot_mois_publication(df):
     x["Mois de la publication"] = x.month_publication.dt.month_name("fr_FR.UTF-8")
     x = x.groupby(["month_publication_digit", "Mois de la publication"])
     x = x[LABELS.n_bilans].nunique()
-    return x.plot(x="Mois de la publication", kind="bar").opts(**PLOT_OPTS)
+    return x.plot(x="Mois de la publication", kind="bar", **SIZE)
 
 
 def secteur_activite_n_entites_treemap(df):
@@ -211,8 +276,11 @@ def secteur_activite_n_entites_treemap(df):
         hover_name=LABELS.n_entites,
     )
     fig.update_traces(hovertemplate=f"{LABELS.n_entites}: %{{value}}<br><br>%{{label}}")
-    fig.update_layout(width=1200, height=800)
-    return pn.pane.Plotly(fig)
+    fig.update_layout(**PLOTLY_OPTS)
+    return pn.pane.Plotly(
+        fig,
+        height=PLOTLY_HEIGHT,
+    )
 
 
 def secteur_activite_ratio_treemap(df):
@@ -246,12 +314,14 @@ def secteur_activite_ratio_treemap(df):
         f"%{{label}}"
     )
     fig.update_layout(
-        width=1200,
-        height=800,
+        **PLOTLY_OPTS,
         coloraxis_colorbar_orientation="h",
         coloraxis_colorbar_y=-0.15,
     )
-    return pn.pane.Plotly(fig)
+    return pn.pane.Plotly(
+        fig,
+        height=PLOTLY_HEIGHT,
+    )
 
 
 def _get_plots(df):
@@ -299,17 +369,14 @@ def _get_plots(df):
         Plot(
             title="Secteur d'activité",
             widget=secteur_activite_ratio_treemap(df),
-            description="Ratio du nombre d'entités ayant publié au moins un bilan sur le nombre d'entités"
-            ' "obligées", par secteur.\n\n'
-            "Notes:\n"
-            "* Le nombre d'entités obligées (c'est à dire, soumises à la réglementation BEGES) est tiré du rapport "
-            "de l'ADEME: [Evaluation 2021 de la Réglementation des Bilans d'Emissions de Gaz à Effet de Serre]"
-            "(https://librairie.ademe.fr/changement-climatique-et-energie/5919-evaluation-2021-de-la-reglementation-des-bilans-d-emissions-de-gaz-a-effet-de-serre.html),"
-            " Annexe 1. "
-            "Ces données sont en principe valables uniquement pour l'année 2021, mais le rapport indique relativement "
-            "peu de changements d'une année à l'autre.\n"
-            "* La taille des blocs est déterminée par le *nombre d'entités obligées* (et non pas par l'importance du "
-            "secteur en termes d'émissions par exemple).",
+            description="""
+Ratio du nombre d'entités ayant publié au moins un bilan sur le nombre d'entités "obligées", par secteur.
+
+Notes:
+
+* Le nombre d'entités obligées (c'est à dire, soumises à la réglementation BEGES) est tiré du rapport de l'ADEME: [Evaluation 2021 de la Réglementation des Bilans d'Emissions de Gaz à Effet de Serre](https://librairie.ademe.fr/changement-climatique-et-energie/5919-evaluation-2021-de-la-reglementation-des-bilans-d-emissions-de-gaz-a-effet-de-serre.html), Annexe 1. Ces données sont en principe valables uniquement pour l'année 2021, mais le rapport indique relativement peu de changements d'une année à l'autre.
+* La taille des blocs est déterminée par le *nombre d'entités obligées* (et non pas par l'importance du secteur en termes d'émissions par exemple).
+""",
         ),
         #     # Quel périmètre pour le bilan GES ?
         #     Plot(
@@ -358,13 +425,17 @@ def get_profiles_dashboard():
         txt = f"## {p.title}"
         if p.description:
             txt += f"\n{p.description}"
-        return pn.pane.Markdown(txt)
+        return pn.pane.Markdown(
+            txt,
+            max_width=MAX_TEXT_WIDTH,
+        )
 
-    plots = [(_get_md(p), p.widget, pn.layout.Divider()) for p in _get_plots(df)]
-    plots = [i for tup in plots for i in tup]  # flatten list
-
-    return pn.Column(
-        pn.pane.Markdown("""
-        """),
-        *plots,
-    )
+    plots = [
+        pn.Column(
+            _get_md(p),
+            p.widget,
+            **p.styles
+        )
+        for p in _get_plots(df)
+    ]
+    return pn.FlexBox(*plots)

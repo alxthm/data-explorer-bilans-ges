@@ -4,10 +4,38 @@ import param
 from panel.widgets import MultiChoice
 
 from src.data.make_dataset import DATA_PATH
+from src.visualization.utils import section
 from src.visualization.visualize import (
     _get_upper_bar,
-    PLOT_OPTS,
     LABELS,
+)
+
+# -- Notes on flex-box and responsive sizing
+#
+# Adding `responsive=True` to hvplot options is required for the plot to shrink/grow according to min_width and
+# max_width (otherwise it just has a constant width).
+# (Also, these responsive and aspect options need to be passed to the .plot() function, not in .opts():
+# https://github.com/holoviz/hvplot/issues/350#issuecomment-619015585).
+#
+# Also note that the frame_height / frame_width hvplot options, although nice to set the size of the inside plot (no
+# matter the size of the legend and axes), is not responsive.
+#
+# To work inside a flexbox, the `flex` styles option of panel widgets (e.g. Column) need to be set accordingly.
+#   `flex: <flex-grow> <flex-shrink> <flex-basis>`
+#
+# * `flex-basis` sets the size of the item before shrinking/growing is applied
+#   * `auto` uses the "value of the width" (?). In practice, for responsive hvplot widgets, it stretches the width to
+#     fill the screen, which we don't want.
+#   * `max-content` means "intrinsic preferred width". In practice, for responsive hvplot widgets, it seems identical
+#     to `min-content` and `fit-content`, and seems to use the max_width, which is what we want.
+# * `flex-grow` indicates how much free space should the item take (in the primary direction).
+# * `flex-shrink` indicates how much negative free space should the item take.
+
+SIZE = dict(
+    responsive=True,
+    height=450,
+    min_width=750,
+    max_width=1100,
 )
 
 
@@ -86,17 +114,37 @@ def get_benchmark_dashboard():
     plot_n_bilans_widget = pn.bind(plot_n_bilans, df=data, group_by=group_by)
     n_bilans_widget = pn.bind(n_bilans, df=data)
 
-    return pn.Row(
-        pn.WidgetBox(
-            plot_col,
-            group_by,
-            *(w.widget() for w in widgets.values()),
-            margin=10,
+    return pn.FlexBox(
+        pn.Column(
+            "## Filtrer les bilans",
+            pn.WidgetBox(
+                plot_col,
+                group_by,
+                *(w.widget() for w in widgets.values()),
+                margin=10,
+            ),
+            n_bilans_widget,
+            styles={
+                "flex": "0 0 auto",
+            },
         ),
         pn.Column(
-            n_bilans_widget,
+            "## Émissions",
             plot_emissions_widget,
+            "## Nb. bilans",
             plot_n_bilans_widget,
+            styles={
+                # Set flex-grow to 1 so the graph gets priority for growing
+                "flex": "1 0 max-content",
+            },
+        ),
+        pn.Column(
+            "## Notes",
+            section("benchmark-notes"),
+            styles={
+                # Set flex-grow to 0 so the notes don't get priority for growing. They can shrink if needed though
+                "flex": "0 1 auto",
+            },
         ),
     )
 
@@ -143,6 +191,7 @@ def plot_emissions(
         y=plot_col,
         # fields={"naf1": {"default": "all"}},
         # hover_cols="all",
+        **SIZE,
     )
 
     match plot_col:
@@ -166,7 +215,6 @@ def plot_emissions(
         # and the n_bilans plot keep their y-axis forever, even after un-selecting some options)
         shared_axes=False,
         **opts,
-        **PLOT_OPTS,
     )
 
 
@@ -179,7 +227,11 @@ def plot_n_bilans(df: pd.DataFrame, group_by: str):
         y_col = part_bilan_label
 
         # there can be NaN or 0 values in 'emissions': we consider both as empty data
-        x = x[LABELS.emissions_total].agg(lambda i: i.ne(0, fill_value=0).sum()).rename(n_bilan_label)
+        x = (
+            x[LABELS.emissions_total]
+            .agg(lambda i: i.ne(0, fill_value=0).sum())
+            .rename(n_bilan_label)
+        )
         x = x.to_frame()
         n_bilans = df["Id"].nunique()
         x[part_bilan_label] = x[n_bilan_label] / n_bilans * 100
@@ -192,6 +244,7 @@ def plot_n_bilans(df: pd.DataFrame, group_by: str):
         y=y_col,
         # display all the data (absolute nb. in addition of the %) in the hover toolbox
         hover_cols="all",
+        **SIZE,
     )
 
     return fig.opts(
@@ -199,7 +252,6 @@ def plot_n_bilans(df: pd.DataFrame, group_by: str):
         invert_axes=True,
         shared_axes=False,
         alpha=0.5,
-        **PLOT_OPTS,
     )
 
 
@@ -208,7 +260,6 @@ def n_bilans(df: pd.DataFrame):
 
 
 # Helper functions
-
 
 
 def _boxwhisker_upper_bound(x):

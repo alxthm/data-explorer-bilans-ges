@@ -1,11 +1,8 @@
-from pathlib import Path
-
 import panel as pn
 
 from src.visualization.panel_figures.benchmark import get_benchmark_dashboard
 from src.visualization.panel_figures.profiles import get_profiles_dashboard
-
-_SRC_PATH = Path(__file__).resolve().parent
+from src.visualization.utils import section
 
 pn.extension("plotly")
 
@@ -18,21 +15,15 @@ template = pn.Template(
     """
 )
 
-
-def _markdown(name: str):
-    md_file = _SRC_PATH / f"visualization/markdown/{name}.md"
-    return pn.pane.Markdown(md_file.read_text())
-
-
 benchmark = get_benchmark_dashboard()
 profiles = get_profiles_dashboard()
 
 main = pn.Column(
-    _markdown("header"),
+    section("header"),
     pn.Tabs(
         ("Benchmark Émissions", benchmark),
         ("Profil des entreprises", profiles),
-        ("À propos", _markdown("about")),
+        ("À propos", section("about")),
     ),
 )
 

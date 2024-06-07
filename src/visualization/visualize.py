@@ -30,8 +30,6 @@ def _patched_get_data(*args, **kwargs):
 _original_get_data = hv.plotting.bokeh.stats.BoxWhiskerPlot.get_data
 hv.plotting.bokeh.stats.BoxWhiskerPlot.get_data = _patched_get_data
 
-PLOT_OPTS = dict(frame_height=350, frame_width=600)
-
 
 def select_widget(
     df: pd.DataFrame, col: str, name=None, sort=False, widget=pn.widgets.Select
@@ -72,55 +70,3 @@ class LABELS:
     poste_emissions = "Poste d'émissions"
     emissions_par_salarie = "Émission_par_salarié"
     emissions_total = "Émissions_totales"
-
-
-_LABELS_NUNIQUE = {
-    "Id": LABELS.n_bilans,
-    "SIREN principal": LABELS.n_entites,
-}
-
-
-def df_nunique(df, groupby: str, sort=True):
-    x = df.groupby([groupby], as_index=False).nunique().rename(columns=_LABELS_NUNIQUE)
-    if sort:
-        x = x.sort_values(LABELS.n_bilans, ascending=False)
-    return x
-
-
-def plot_nunique(
-    df,
-    groupby: str,
-    *,
-    y=(LABELS.n_bilans, LABELS.n_entites),
-    sort=True,
-    opts=None,
-    rot=90,
-):
-    x = df_nunique(df, groupby, sort)
-    if opts is None:
-        opts = dict(multi_level=False, **PLOT_OPTS)
-    x = x.plot(
-        x=groupby,
-        y=y,
-        kind="bar",
-        rot=rot,
-    )
-    return x.opts(**opts, shared_axes=False)
-
-
-def yearly_evolution(_df, col, opts=None):
-    if opts is None:
-        opts = dict(multi_level=False, **PLOT_OPTS)
-
-    x = _df.groupby(["Année de reporting", col], as_index=False)
-    x = (
-        x["SIREN principal"]
-        .nunique()
-        .rename(columns={"SIREN principal": LABELS.n_entites})
-        .pivot(
-            columns=col,
-            index="Année de reporting",
-            values=LABELS.n_entites,
-        )
-    )
-    return x.plot(kind="bar", rot=90).opts(**opts, shared_axes=False)
