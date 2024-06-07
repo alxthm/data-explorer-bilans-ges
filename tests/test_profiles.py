@@ -6,11 +6,7 @@ from src.visualization.panel_figures.profiles import (
     df_nunique,
 )
 from src.visualization.visualize import LABELS
-
-# Total number of bilans GES in the database
-N_BILANS_TOTAL = 5639
-# Total number of entities with a different SIREN in the database
-N_ENTITES_TOTAL = 4021
+from tests.constants import N_BILANS_TOTAL, N_ENTITES_TOTAL
 
 
 class TestDataCoherence:

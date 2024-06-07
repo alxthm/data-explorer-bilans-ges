@@ -82,14 +82,20 @@ def get_multi_choice(df: pd.DataFrame, col: str, name=None, sort=False):
     return MultiChoiceWithAll(name=name or col)
 
 
-filters = dict(
+FILTERS = dict(
     type_structure=dict(col=LABELS.type_structure),
     secteur_activite=dict(col=LABELS.secteur_activite),
-    categorie_emissions=dict(col=LABELS.category_emissions),
+    category_emissions=dict(col=LABELS.category_emissions),
     poste_emissions=dict(col=LABELS.poste_emissions),
     annee=dict(col="Année de reporting", sort=True),
     mode_consolidation=dict(col="Mode de consolidation"),
 )
+
+GROUP_BY_OPTIONS = [
+    LABELS.poste_emissions,
+    LABELS.type_structure,
+    LABELS.secteur_activite,
+]
 
 
 def get_benchmark_dashboard():
@@ -101,9 +107,9 @@ def get_benchmark_dashboard():
     )
     group_by = pn.widgets.Select(
         name="Group by",
-        options=[LABELS.poste_emissions, LABELS.type_structure, LABELS.secteur_activite],
+        options=GROUP_BY_OPTIONS,
     )
-    widgets = {key: get_multi_choice(df, **kw) for key, kw in filters.items()}
+    widgets = {key: get_multi_choice(df, **kw) for key, kw in FILTERS.items()}
     # nested parameters don't seem to work well, so we pass all options directly as kwarg
     kwargs = dict(
         **{f"{k}_all": w.param.select_all for k, w in widgets.items()},
@@ -111,6 +117,7 @@ def get_benchmark_dashboard():
     )
 
     data = pn.bind(filter_options, df=df, secteur_activite="all", **kwargs)
+    data = pn.bind(aggregate_bilans, df=data, plot_col=plot_col, group_by=group_by)
     plot_emissions_widget = pn.bind(
         plot_emissions, df=data, plot_col=plot_col, group_by=group_by
     )
@@ -167,7 +174,7 @@ def filter_options(
     if secteur_activite != "all":
         x = x[x[LABELS.secteur_activite] == secteur_activite]
 
-    for key, opts in filters.items():
+    for key, opts in FILTERS.items():
         select_all: bool = kwargs.get(f"{key}_all", True)
         selected_options: list[str] = kwargs.get(f"{key}_options")
         col_name = opts["col"]
@@ -181,6 +188,55 @@ def filter_options(
     x = x[x != 0]
 
     return x
+
+
+def aggregate_bilans(df: pd.DataFrame, *, plot_col: str, group_by: str):
+    """Aggregate data so that a group_by on the resulting data makes sense.
+
+    Basically, before grouping emissions by an inter-bilan categories, we first need to group all the emissions
+    per bilan (Id) and sum them together.
+    This then allows doing other stats (mean, median, ...) on the total emissions per bilan.
+
+    Note that, if the data was filtered prior (e.g. excluding some categories of emissions), then the stats will
+    be on the filtered data, not on the total bilan emissions.
+
+                     ▲          ┌─┐
+                     │          │ │
+                     │    ┌─┐   ├─┤
+                     │    │ │   │ │
+                     │    ├─┤   ├─┤
+                     │    ├─┤   │ │   ┌─┐
+                     │    │ │   ├─┤   │ │
+    Intra-bilan      │    ├─┤   ├─┤   │ │
+    categories       │    │ │   │ │   │ │
+    (poste_emissions)│    │ │   ├─┤   ├─┤   ┌─┐
+                     │    │ │   ├─┤   │ │   │ │
+                     │    ├─┤   │ │   │ │   ├─┤
+                     │    │ │   │ │   ├─┤   │ │
+                     │    └─┘   └─┘   └─┘   └─┘
+
+                          ────────────────────►    Bilans (Id)
+
+                         │                │ │  │
+                         └────────────────┘ └──┘
+
+                          ────────────────────►    Inter-bilan categories
+                                                   (secteur_activite,
+                                                   type_structure, ...)
+
+    """
+    match group_by:
+        case LABELS.poste_emissions:
+            # We are grouping by an "intra-bilan" category, which means we don't want to aggregate emissions per bilan
+            return df
+
+        case LABELS.type_structure | LABELS.secteur_activite:
+            # Get rid of intra-bilan categories (e.g. poste_emissions) by summing them together
+            x = df.groupby([group_by, "Id"], dropna=False)[plot_col].sum()
+            return x.reset_index()
+
+        case _:
+            raise ValueError(f"{group_by=} not supported")
 
 
 def plot_emissions(
@@ -198,8 +254,6 @@ def plot_emissions(
         # with a regular scatter plot.
         by=group_by,
         y=plot_col,
-        # fields={"naf1": {"default": "all"}},
-        # hover_cols="all",
         **SIZE,
     )
 
@@ -207,7 +261,7 @@ def plot_emissions(
         case LABELS.emissions_par_salarie:
             opts = dict(
                 ylabel="tCO2 eq. / salarié",
-                ylim=(0, _boxwhisker_upper_bound(x) + 1.0),
+                ylim=(0, _boxwhisker_upper_bound(x, group_by=group_by) + 1.0),
             )
         case LABELS.emissions_total:
             opts = dict(
@@ -269,15 +323,12 @@ def n_bilans(df: pd.DataFrame):
 # Helper functions
 
 
-def _boxwhisker_upper_bound(x):
+def _boxwhisker_upper_bound(x, group_by: str):
     # compute the upper bound of all whisker plots
     upper = 1.0
-    for sub_poste in x[LABELS.poste_emissions].unique():
-        if sub_poste is None:
+    for category in x[group_by].unique():
+        if category is None:
             continue
-        y = x[
-            (x[LABELS.poste_emissions] == sub_poste)
-            & ~pd.isna(x[LABELS.emissions_par_salarie])
-        ]
+        y = x[(x[group_by] == category) & ~pd.isna(x[LABELS.emissions_par_salarie])]
         upper = max(upper, _get_upper_bar(y[LABELS.emissions_par_salarie].values))
     return upper
