@@ -37,6 +37,9 @@ SIZE = dict(
     min_width=750,
     max_width=1100,
 )
+STYLES = {
+    "border": "1px solid WhiteSmoke",
+}
 
 
 @pn.cache
@@ -126,6 +129,7 @@ def get_benchmark_dashboard():
             n_bilans_widget,
             styles={
                 "flex": "0 0 auto",
+                **STYLES,
             },
         ),
         pn.Column(
@@ -136,15 +140,18 @@ def get_benchmark_dashboard():
             styles={
                 # Set flex-grow to 1 so the graph gets priority for growing
                 "flex": "1 0 max-content",
+                **STYLES,
             },
         ),
         pn.Column(
             "## Notes",
-            section("benchmark-notes"),
+            section("benchmark/notes"),
             styles={
                 # Set flex-grow to 0 so the notes don't get priority for growing. They can shrink if needed though
                 "flex": "0 1 auto",
+                **STYLES,
             },
+            max_width=400,
         ),
     )
 
@@ -209,7 +216,6 @@ def plot_emissions(
             raise ValueError(plot_col)
 
     return box.opts(
-        title="Émissions",
         invert_axes=True,
         # This is important to properly clear the axes when changing widget options (otherwise, both the emission
         # and the n_bilans plot keep their y-axis forever, even after un-selecting some options)
@@ -248,7 +254,6 @@ def plot_n_bilans(df: pd.DataFrame, group_by: str):
     )
 
     return fig.opts(
-        title="Nb. de bilans",
         invert_axes=True,
         shared_axes=False,
         alpha=0.5,
