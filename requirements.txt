@@ -17,6 +17,7 @@ xlrd  # to read excel files
 scipy  # for kde plots
 selenium  # for bokeh.io exports
 kaleido  # for plotly.io exports
+watchfiles  # for panel autoreload
 
 # devtools
 ruff
