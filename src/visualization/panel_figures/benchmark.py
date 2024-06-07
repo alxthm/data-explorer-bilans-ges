@@ -122,7 +122,7 @@ def get_benchmark_dashboard():
         plot_emissions, df=data, plot_col=plot_col, group_by=group_by
     )
     plot_n_bilans_widget = pn.bind(plot_n_bilans, df=data, group_by=group_by)
-    n_bilans_widget = pn.bind(n_bilans, df=data)
+    n_bilans_widget = pn.bind(n_bilans_text, df=data)
 
     return pn.FlexBox(
         pn.Column(
@@ -317,7 +317,11 @@ def plot_n_bilans(df: pd.DataFrame, group_by: str):
 
 
 def n_bilans(df: pd.DataFrame):
-    return f"**Nb. total de bilans sélectionnés: {df.Id.nunique()}**"
+    return df.Id.nunique()
+
+
+def n_bilans_text(df: pd.DataFrame):
+    return f"**Nb. total de bilans sélectionnés: {n_bilans(df)}**"
 
 
 # Helper functions

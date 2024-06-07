@@ -9,6 +9,7 @@ from src.visualization.panel_figures.benchmark import (
     filter_options,
     FILTERS,
     aggregate_bilans,
+    n_bilans,
 )
 from src.visualization.visualize import LABELS
 from tests.constants import N_POSTES_EMISSIONS, N_BILANS_TOTAL, TOTAL_EMISSIONS
@@ -129,6 +130,7 @@ def test_after_filter_and_group_by(df, group_by, filters):
         **{f"{k}_options": v for k, v in filters.items()},
     )
     df_filtered = filter_options(df, secteur_activite="all", **filter_kwargs)
+    assert n_bilans(df_filtered) == expected_n_bilans
     x = aggregate_bilans(
         df_filtered, plot_col=LABELS.emissions_total, group_by=group_by
     )
