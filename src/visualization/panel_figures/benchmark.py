@@ -2,6 +2,7 @@ import pandas as pd
 import panel as pn
 import param
 from panel.widgets import MultiChoice
+import holoviews as hv
 
 from src.data.make_dataset import DATA_PATH
 from src.visualization.utils import section
@@ -256,6 +257,12 @@ def plot_emissions(
         y=plot_col,
         **SIZE,
     )
+    scatter = (
+        x.groupby(group_by)[plot_col]
+        .mean()
+        .rename("Moyenne")
+        .plot(kind="scatter", **SIZE)
+    )
 
     match plot_col:
         case LABELS.emissions_par_salarie:
@@ -271,12 +278,20 @@ def plot_emissions(
         case _:
             raise ValueError(plot_col)
 
-    return box.opts(
-        invert_axes=True,
-        # This is important to properly clear the axes when changing widget options (otherwise, both the emission
-        # and the n_bilans plot keep their y-axis forever, even after un-selecting some options)
-        shared_axes=False,
-        **opts,
+    return (box * scatter).opts(
+        hv.opts(
+            invert_axes=True,
+            # This is important to properly clear the axes when changing widget options (otherwise, both the emission
+            # and the n_bilans plot keep their y-axis forever, even after un-selecting some options)
+            shared_axes=False,
+            legend_position="bottom",
+            # active_tools=['ywheel_zoom'],
+            **opts,
+        ),
+        hv.opts.BoxWhisker(show_legend=False),
+        hv.opts.Scatter(
+            color="red",
+        ),
     )
 
 
