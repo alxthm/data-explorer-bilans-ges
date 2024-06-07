@@ -6,6 +6,13 @@ from src.visualization.utils import section
 
 pn.extension("plotly")
 
+# Load the custom CSS: increase app font size
+pn.config.raw_css.append("""
+:host {
+    --bokeh-font-size: 1em;
+}
+""")
+
 template = pn.Template(
     """
 {% extends base %}
