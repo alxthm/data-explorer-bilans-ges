@@ -1,5 +1,10 @@
 FROM python:3.11
 
+# Make the fr_FR locale available
+RUN apt-get update && apt-get install -y locales && \
+    sed -i -e 's/# fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales
+
 WORKDIR /code
 
 COPY . .
