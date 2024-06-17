@@ -357,6 +357,11 @@ def _get_plots(df):
             title="Mois de publication",
             widget=plot_mois_publication(df),
         ),
+        # Quel périmètre pour le bilan GES ?
+        Plot(
+            title="Mode de consolidation (opérationnel / financier)",
+            widget=plot_nunique(df, "Mode de consolidation"),
+        ),
         # Quels secteurs d'activités ?
         Plot(
             title="Secteur d'activité",
@@ -378,11 +383,6 @@ Notes:
 * La taille des blocs est déterminée par le *nombre d'entités obligées* (et non pas par l'importance du secteur en termes d'émissions par exemple).
 """,
         ),
-        #     # Quel périmètre pour le bilan GES ?
-        #     Plot(
-        #         title="Mode de consolidation (opérationnel / financier)",
-        #         widget=plot_nunique(df, "Mode de consolidation"),
-        #     ),
         #     Plot(
         #         title="Seuil d'importance retenu (%)",
         #         widget=plot_nunique(df, "Seuil d'importance retenu (%)"),
@@ -430,12 +430,5 @@ def get_profiles_dashboard():
             max_width=MAX_TEXT_WIDTH,
         )
 
-    plots = [
-        pn.Column(
-            _get_md(p),
-            p.widget,
-            **p.styles
-        )
-        for p in _get_plots(df)
-    ]
+    plots = [pn.Column(_get_md(p), p.widget, **p.styles) for p in _get_plots(df)]
     return pn.FlexBox(*plots)
