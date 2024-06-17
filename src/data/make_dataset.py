@@ -210,6 +210,7 @@ def transform_to_benchmark_df(df_enriched: pd.DataFrame) -> pd.DataFrame:
             "naf4",
             "month_publication",
             "Année de reporting",
+            "Structure obligée",
         ],
         value_vars=_emission_cols,
         value_name="emissions",
