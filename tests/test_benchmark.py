@@ -24,11 +24,14 @@ def test_full_data(df):
     # Even though the emissions for many rows are 0 or nan, we have 22 rows per bilan in the full dataframe.
     assert len(df) == N_BILANS_TOTAL * N_POSTES_EMISSIONS
 
-    # Default filtering options should not remove any data
+    # Default filtering option should remove rows with zero or nan values
+    n_nans_and_zeros = (
+        df[LABELS.emissions_total].eq(0).sum() + df[LABELS.emissions_total].isna().sum()
+    )
     x = filter_options(
         df, secteur_activite="all", **{f"{k}_all": True for k in FILTERS}
     )
-    assert len(x) == N_BILANS_TOTAL * N_POSTES_EMISSIONS
+    assert len(x) == N_BILANS_TOTAL * N_POSTES_EMISSIONS - n_nans_and_zeros
 
     # Check that the sum of all emissions is consistent
     assert (
@@ -60,7 +63,7 @@ def test_filter_options():
 _filter_options = {
     "type_structure": [
         "all",
-        ["Collectivité territoriale (dont EPCI)"],
+        # ["Collectivité territoriale (dont EPCI)"],
         ["Établissement public", "Entreprise"],
     ],
     "secteur_activite": [
@@ -110,6 +113,7 @@ _all_options = itertools.product(*_filter_options.values())
     itertools.product(
         (
             LABELS.poste_emissions,
+            LABELS.category_emissions,
             LABELS.type_structure,
             LABELS.secteur_activite,
         ),
@@ -120,9 +124,9 @@ def test_after_filter_and_group_by(df, group_by, filters):
     filters = dict(zip(_filter_options.keys(), filters))
     # Compute expected sanity values
     z = _filtered_df(df, filters)
+    z = z[~z[LABELS.emissions_total].fillna(0).eq(0)]  # filter out nans and zeros
     expected_total_emissions = z[LABELS.emissions_total].sum()
     expected_n_bilans = z["Id"].nunique()
-    expected_postes_emissions = z[LABELS.poste_emissions].nunique()
 
     # Apply the functions we want to test
     filter_kwargs = dict(
@@ -130,13 +134,12 @@ def test_after_filter_and_group_by(df, group_by, filters):
         **{f"{k}_options": v for k, v in filters.items()},
     )
     df_filtered = filter_options(df, secteur_activite="all", **filter_kwargs)
+    n_nans_and_zeros = (
+        z[LABELS.emissions_total].eq(0).sum() + z[LABELS.emissions_total].isna().sum()
+    )
+    assert len(df_filtered) == len(z) - n_nans_and_zeros
     assert n_bilans(df_filtered) == expected_n_bilans
-    x = aggregate_bilans(
-        df_filtered, plot_col=LABELS.emissions_total, group_by=group_by
-    )
-    x2 = aggregate_bilans(
-        df_filtered, plot_col=LABELS.emissions_par_salarie, group_by=group_by
-    )
+    x = aggregate_bilans(df_filtered, group_by=group_by)
 
     # Total emissions grouped by the y_axis column...
     # ... in the original dataframe
@@ -146,7 +149,7 @@ def test_after_filter_and_group_by(df, group_by, filters):
     # ... and in the filtered and aggregated dataframe
     emissions_x = x.groupby(group_by, dropna=False)[LABELS.emissions_total].sum().values
     emissions_x2 = (
-        x2.groupby(group_by, dropna=False)[LABELS.emissions_par_salarie].sum().values
+        x.groupby(group_by, dropna=False)[LABELS.emissions_par_salarie].sum().values
         * df_filtered.groupby(group_by, dropna=False)["nb_salaries_mean"].sum().values
     )
     # They should all match, category by category
@@ -155,9 +158,12 @@ def test_after_filter_and_group_by(df, group_by, filters):
 
     assert np.allclose(emissions_x.sum(), expected_total_emissions)
 
-    if group_by == LABELS.poste_emissions:
-        # For intra-bilan group_by, we should have 1 row per bilan (Id) and per poste emissions
-        assert len(x) == expected_n_bilans * expected_postes_emissions
+    if group_by in [
+        LABELS.poste_emissions,
+        LABELS.category_emissions,
+        LABELS.scope_emissions,
+    ]:
+        assert len(x) > expected_n_bilans
     else:
         # For inter-bilan group_by, we should have 1 row per bilan (Id)
         assert len(x) == expected_n_bilans

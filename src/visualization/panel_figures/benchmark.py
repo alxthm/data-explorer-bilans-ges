@@ -49,12 +49,18 @@ def get_df() -> pd.DataFrame:
     df = df.rename(
         columns={
             "naf1": LABELS.secteur_activite,
+            "scope_name": LABELS.scope_emissions,
             "poste_name": LABELS.category_emissions,
             "sub_poste_name": LABELS.poste_emissions,
             "emissions_par_salarie": LABELS.emissions_par_salarie,
             "emissions": LABELS.emissions_total,
         }
     )
+    df[LABELS.secteur_activite] = (
+        df[LABELS.secteur_activite].astype(str).str.replace("nan", "undefined")
+    )
+    df.month_publication = pd.to_datetime(df.month_publication)
+    df[LABELS.annee_publication] = df.month_publication.dt.year
     return df
 
 
@@ -88,15 +94,20 @@ FILTERS = dict(
     secteur_activite=dict(col=LABELS.secteur_activite),
     category_emissions=dict(col=LABELS.category_emissions),
     poste_emissions=dict(col=LABELS.poste_emissions),
-    annee=dict(col="Année de reporting", sort=True),
+    annee=dict(col=LABELS.annee_reporting, sort=True),
     mode_consolidation=dict(col="Mode de consolidation"),
 )
 
 GROUP_BY_OPTIONS = [
-    LABELS.poste_emissions,
     LABELS.type_structure,
     LABELS.secteur_activite,
+    LABELS.annee_reporting,
+    LABELS.scope_emissions,
+    LABELS.category_emissions,
+    LABELS.poste_emissions,
 ]
+
+PLOT_COL_OPTIONS = [LABELS.emissions_par_salarie, LABELS.emissions_total]
 
 
 def get_benchmark_dashboard():
@@ -104,7 +115,7 @@ def get_benchmark_dashboard():
 
     plot_col = pn.widgets.Select(
         name="Indicateur",
-        options=[LABELS.emissions_par_salarie, LABELS.emissions_total],
+        options=PLOT_COL_OPTIONS,
     )
     group_by = pn.widgets.Select(
         name="Group by",
@@ -118,7 +129,7 @@ def get_benchmark_dashboard():
     )
 
     data = pn.bind(filter_options, df=df, secteur_activite="all", **kwargs)
-    data = pn.bind(aggregate_bilans, df=data, plot_col=plot_col, group_by=group_by)
+    data = pn.bind(aggregate_bilans, df=data, group_by=group_by)
     plot_emissions_widget = pn.bind(
         plot_emissions, df=data, plot_col=plot_col, group_by=group_by
     )
@@ -143,7 +154,7 @@ def get_benchmark_dashboard():
         pn.Column(
             "## Émissions",
             plot_emissions_widget,
-            "## Nb. bilans",
+            "## Nombre de bilans",
             plot_n_bilans_widget,
             styles={
                 # Set flex-grow to 1 so the graph gets priority for growing
@@ -186,12 +197,11 @@ def filter_options(
     with pd.option_context("future.no_silent_downcasting", True):
         # the context is just here to remove a pandas warning
         x = x.fillna(0)
-    x = x[x != 0]
-
+    x = x[x[LABELS.emissions_par_salarie] != 0]
     return x
 
 
-def aggregate_bilans(df: pd.DataFrame, *, plot_col: str, group_by: str):
+def aggregate_bilans(df: pd.DataFrame, *, group_by: str):
     """Aggregate data so that a group_by on the resulting data makes sense.
 
     Basically, before grouping emissions by an inter-bilan categories, we first need to group all the emissions
@@ -226,18 +236,11 @@ def aggregate_bilans(df: pd.DataFrame, *, plot_col: str, group_by: str):
                                                    type_structure, ...)
 
     """
-    match group_by:
-        case LABELS.poste_emissions:
-            # We are grouping by an "intra-bilan" category, which means we don't want to aggregate emissions per bilan
-            return df
-
-        case LABELS.type_structure | LABELS.secteur_activite:
-            # Get rid of intra-bilan categories (e.g. poste_emissions) by summing them together
-            x = df.groupby([group_by, "Id"], dropna=False)[plot_col].sum()
-            return x.reset_index()
-
-        case _:
-            raise ValueError(f"{group_by=} not supported")
+    # If group_by is the smallest unit of intra-bilan, this group_by does nothing.
+    # But it is necessary to do it for scope / category of emissions : we consider a category as long as there is at
+    # least one poste_emission with non-zero data inside.
+    x = df.groupby([group_by, "Id"], dropna=False)[PLOT_COL_OPTIONS].sum()
+    return x.reset_index()
 
 
 def plot_emissions(
