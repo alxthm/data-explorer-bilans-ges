@@ -348,9 +348,15 @@ def plot_emissions(
 def plot_n_bilans(df: pd.DataFrame, group_by: str):
     x = df.groupby(group_by, sort=False)
 
-    if group_by == LABELS.poste_emissions:
-        n_bilan_label = "Nb. de bilans incluant le poste d'émissions"
-        part_bilan_label = "Part de bilans incluant le poste d'émissions (%)"
+    _labels = {
+        LABELS.scope_emissions: "ce scope",
+        LABELS.category_emissions: "cette catégorie d'émissions",
+        LABELS.poste_emissions: "ce poste d'émissions",
+    }
+
+    if group_by in _labels:
+        n_bilan_label = f"Nombre de bilans incluant {_labels[group_by]}"
+        part_bilan_label = f"Part de bilans incluant {_labels[group_by]} (%)"
         y_col = part_bilan_label
 
         # there can be NaN or 0 values in 'emissions': we consider both as empty data
