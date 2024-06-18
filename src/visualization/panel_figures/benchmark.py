@@ -234,11 +234,14 @@ def filter_options(
         x = x[x[LABELS.secteur_activite] == secteur_activite]
 
     for key, opts in FILTERS.items():
-        select_all: bool = kwargs.get(f"{key}_all", True)
-        selected_options: list[str] = kwargs.get(f"{key}_options")
+        select_all: bool = kwargs.pop(f"{key}_all", True)
+        selected_options: list[str] = kwargs.pop(f"{key}_options", [])
         col_name = opts["col"]
         if not select_all:
             x = x[x[col_name].isin(selected_options)]
+
+    if kwargs:
+        raise ValueError(f'Remaining {kwargs=}')
 
     # drop nan values and zeros
     with pd.option_context("future.no_silent_downcasting", True):
