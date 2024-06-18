@@ -29,7 +29,7 @@ main = pn.Column(
     section("header"),
     pn.Tabs(
         ("Benchmark Émissions", benchmark),
-        ("Profil des entreprises", profiles),
+        ("Profil des entreprises et des bilans publiés", profiles),
         ("À propos", section("about")),
     ),
 )
