@@ -13,10 +13,24 @@ PYTHON_INTERPRETER = python3
 # COMMANDS                                                                      #
 #################################################################################
 
-# ## Install Python Dependencies
-# requirements: test_environment
-# 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
-# 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
+## Install Python Dependencies
+# For now:
+# * requirements.txt is used as the base source of requirements (could be moved to a pyproject.toml...)
+# * requirements.lock.txt is generated from it (we could use pip-tools for this...),
+#   and used for both local venv and remote docker image
+
+freeze_requirements:
+	$(PYTHON_INTERPRETER) -m venv .venv_for_lock
+	. .venv_for_lock/bin/activate && \
+    	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel && \
+        $(PYTHON_INTERPRETER) -m pip install -r requirements.txt && \
+        $(PYTHON_INTERPRETER) -m pip freeze > requirements.lock.txt && \
+	rm -rf .venv_for_lock
+
+install_requirements:
+	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
+	$(PYTHON_INTERPRETER) -m pip install -r requirements.lock.txt
+	$(PYTHON_INTERPRETER) -m pip install -e .
 
 ## Make Dataset
 data: requirements
