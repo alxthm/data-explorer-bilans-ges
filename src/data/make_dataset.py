@@ -249,6 +249,28 @@ def transform_to_benchmark_df(df_enriched: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _clean_and_add_scope_3(df_a, df_b):
+    """
+    Args:
+        df_a: df with one row per Id
+        df_b: df with multiple rows per Id (one for each poste emissions)
+
+    Returns:
+        df_a, with a new column 'has_scope_3'
+    """
+    # remove unnecessary columns for performance and readability
+    df_a = df_a[[c for c in df_a.columns if "Emissions" not in c]]
+
+    # compute which Id have scope 3 data or not
+    scope3 = df_b.groupby(["Id", "scope_name"], as_index=False).emissions.sum()
+    scope3.emissions = scope3.emissions.fillna(0)
+    scope3 = scope3[scope3.scope_name == '3']
+    scope3["has_scope_3"] = scope3.emissions.ne(0)
+    scope3 = scope3[["Id", "has_scope_3"]]
+
+    return pd.merge(df_a, scope3, on="Id")
+
+
 def main():
     """Runs data processing scripts to turn raw data from (../raw) into
     cleaned data ready to be analyzed (saved in ../processed).
@@ -259,6 +281,7 @@ def main():
 
     df_enriched = enrich_df(df_raw)
     df_benchmark = transform_to_benchmark_df(df_enriched)
+    df_enriched = _clean_and_add_scope_3(df_enriched, df_benchmark)
 
     df_enriched.to_csv(DATA_PATH / "processed/bilans-ges-all.csv", index=False)
     df_benchmark.to_csv(DATA_PATH / "processed/bilans-ges-benchmark.csv", index=False)

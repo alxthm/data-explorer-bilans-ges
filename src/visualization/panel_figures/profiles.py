@@ -4,12 +4,11 @@ from typing import Optional, Any
 
 import panel as pn
 import pandas as pd
+import holoviews as hv
 import plotly.express as px
 
 from src.data.make_dataset import DATA_PATH
-from src.visualization.visualize import (
-    LABELS,
-)
+from src.visualization.visualize import LABELS
 
 import textwrap
 
@@ -75,9 +74,6 @@ def get_df():
         DATA_PATH / "processed/bilans-ges-all.csv",
         dtype={"naf2_code": str, "naf3_code": str, "naf4_code": str},
     )
-    # remove unnecessary columns for performance and readability
-    df = df[[c for c in df.columns if "Emissions" not in c]]
-
     df.month_publication = pd.to_datetime(df.month_publication)
     df[LABELS.annee_publication] = df.month_publication.dt.year
     return df
@@ -260,6 +256,30 @@ def plot_mois_publication(df):
     return x.plot(x="Mois de la publication", kind="bar", **SIZE)
 
 
+def plot_share_scope_3(df):
+    x = df.rename(columns=_LABELS_NUNIQUE)
+
+    # Bar plot : share of bilans with scope 3
+    title = "Part de bilans avec scope 3 (%)"
+    a = x.groupby(LABELS.annee_reporting).has_scope_3.mean() * 100
+    # resetting axis is necessary to have the legend working on the y-axis
+    a = a.rename(title).reset_index()
+    a = a.plot(x=LABELS.annee_reporting, y=title, kind="bar")
+
+    # Scatter plot : total number of bilans
+    b = (
+        df.groupby(LABELS.annee_reporting)
+        .Id.nunique()
+        .rename("Nombre de bilans déposés")
+        .plot(kind="scatter")
+    )
+
+    return (a * b).opts(
+        hv.opts(multi_y=True, legend_position="top_left", **SIZE),
+        hv.opts.Scatter(ylim=(0, None), color="red"),
+    )
+
+
 def secteur_activite_n_entites_treemap(df):
     cols = ["naf1", "naf2", "naf3", "naf4"]
     x = (
@@ -363,6 +383,13 @@ def _get_plots(df):
             widget=plot_mois_publication(df),
         ),
         # Quel périmètre pour le bilan GES ?
+        Plot(
+            title="Prise en compte du scope 3",
+            widget=plot_share_scope_3(df),
+            description="Part des bilans (en %) prenant en compte le scope 3.\n"
+            "On considère que le scope 3 est pris en compte dans un bilan dès qu'il y a au moins un poste d'émissions"
+            " du scope 3 renseigné.",
+        ),
         Plot(
             title="Mode de consolidation (opérationnel / financier)",
             widget=plot_nunique(df, "Mode de consolidation"),
