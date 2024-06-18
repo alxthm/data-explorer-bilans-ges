@@ -64,10 +64,11 @@ def get_df() -> pd.DataFrame:
     return df
 
 
-def get_multi_choice(df: pd.DataFrame, col: str, name=None, sort=False):
-    options = df[col].unique().tolist()
-    if sort:
-        options = sorted(options)
+def get_multi_choice(df: pd.DataFrame, col: str, name=None, sort=False, options=None):
+    if options is None:
+        options = df[col].unique().tolist()
+        if sort:
+            options = sorted(options)
 
     # for each choice of options, a different class is needed (because options are shared class-wise)
     class MultiChoiceWithAll(param.Parameterized):
@@ -89,23 +90,44 @@ def get_multi_choice(df: pd.DataFrame, col: str, name=None, sort=False):
     return MultiChoiceWithAll(name=name or col)
 
 
-FILTERS = dict(
-    type_structure=dict(col=LABELS.type_structure),
-    secteur_activite=dict(col=LABELS.secteur_activite),
-    category_emissions=dict(col=LABELS.category_emissions),
-    poste_emissions=dict(col=LABELS.poste_emissions),
-    annee=dict(col=LABELS.annee_reporting, sort=True),
-    mode_consolidation=dict(col="Mode de consolidation"),
-)
+_FILTERS_WITH_HIERARCHY = {
+    "Filtrer les bilans": dict(
+        type_structure=dict(col=LABELS.type_structure),
+        secteur_activite=dict(col=LABELS.secteur_activite),
+    ),
+    "Filtrer le périmètre": dict(
+        scope_emissions=dict(col=LABELS.scope_emissions),
+    ),
+    "Avancé": dict(
+        annee=dict(col=LABELS.annee_reporting, sort=True),
+        mode_consolidation=dict(col="Mode de consolidation"),
+        category_emissions=dict(col=LABELS.category_emissions),
+        poste_emissions=dict(col=LABELS.poste_emissions),
+    ),
+}
 
-GROUP_BY_OPTIONS = [
-    LABELS.type_structure,
-    LABELS.secteur_activite,
-    LABELS.annee_reporting,
-    LABELS.scope_emissions,
-    LABELS.category_emissions,
-    LABELS.poste_emissions,
-]
+_card_opts = {
+    "default": dict(collapsible=False),
+    "Avancé": dict(
+        collapsible=True,
+        collapsed=True,
+    ),
+}
+
+FILTERS = {k: v for opts in _FILTERS_WITH_HIERARCHY.values() for k, v in opts.items()}
+
+GROUP_BY_OPTIONS = {
+    "Bilans": [
+        LABELS.type_structure,
+        LABELS.secteur_activite,
+        LABELS.annee_reporting,
+    ],
+    "Périmètre": [
+        LABELS.scope_emissions,
+        LABELS.category_emissions,
+        LABELS.poste_emissions,
+    ],
+}
 
 PLOT_COL_OPTIONS = [LABELS.emissions_par_salarie, LABELS.emissions_total]
 
@@ -114,18 +136,25 @@ def get_benchmark_dashboard():
     df = get_df()
 
     plot_col = pn.widgets.Select(
-        name="Indicateur",
+        name="Indicateur (axe x)",
         options=PLOT_COL_OPTIONS,
     )
     group_by = pn.widgets.Select(
-        name="Group by",
-        options=GROUP_BY_OPTIONS,
+        name="Group by (axe y)",
+        # options=GROUP_BY_OPTIONS,
+        groups=GROUP_BY_OPTIONS,
     )
-    widgets = {key: get_multi_choice(df, **kw) for key, kw in FILTERS.items()}
+    widgets = {
+        section_title: {key: get_multi_choice(df, **kw) for key, kw in opts.items()}
+        for section_title, opts in _FILTERS_WITH_HIERARCHY.items()
+    }
+    _flat_widgets = {
+        k: w for section_widgets in widgets.values() for k, w in section_widgets.items()
+    }
     # nested parameters don't seem to work well, so we pass all options directly as kwarg
     kwargs = dict(
-        **{f"{k}_all": w.param.select_all for k, w in widgets.items()},
-        **{f"{k}_options": w.param.selected_options for k, w in widgets.items()},
+        **{f"{k}_all": w.param.select_all for k, w in _flat_widgets.items()},
+        **{f"{k}_options": w.param.selected_options for k, w in _flat_widgets.items()},
     )
 
     data = pn.bind(filter_options, df=df, secteur_activite="all", **kwargs)
@@ -136,22 +165,40 @@ def get_benchmark_dashboard():
     plot_n_bilans_widget = pn.bind(plot_n_bilans, df=data, group_by=group_by)
     n_bilans_widget = pn.bind(n_bilans_text, df=data)
 
+    filter_widgets = [
+        pn.layout.Card(
+            *(w.widget() for w in section_widgets.values()),
+            title=section_title,
+            styles={
+                "background": "--background-color",
+                "border-radius": "0.0",
+                "outline": "0.0",
+                "box-shadow": "unset",
+            },
+            sizing_mode="stretch_width",
+            **_card_opts.get(section_title, _card_opts["default"]),
+        )
+        for section_title, section_widgets in widgets.items()
+    ]
+
     return pn.FlexBox(
         pn.Column(
-            "## Filtrer les bilans",
+            "## Options",
             pn.WidgetBox(
+                "### Choisir les axes",
                 plot_col,
                 group_by,
-                *(w.widget() for w in widgets.values()),
+                *filter_widgets,
                 margin=10,
             ),
-            n_bilans_widget,
             styles={
                 "flex": "0 0 auto",
                 **STYLES,
             },
+            max_width=350,
         ),
         pn.Column(
+            n_bilans_widget,
             "## Émissions",
             plot_emissions_widget,
             "## Nombre de bilans",
@@ -339,7 +386,7 @@ def n_bilans(df: pd.DataFrame):
 
 
 def n_bilans_text(df: pd.DataFrame):
-    return f"**Nb. total de bilans sélectionnés: {n_bilans(df)}**"
+    return f"Nombre total de bilans sélectionnés: {n_bilans(df)}"
 
 
 # Helper functions
