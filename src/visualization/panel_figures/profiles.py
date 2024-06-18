@@ -276,6 +276,7 @@ def plot_share_scope_3(df):
 
     return (a * b).opts(
         hv.opts(multi_y=True, legend_position="top_left", **SIZE),
+        hv.opts.Bars(ylim=(0, 100)),
         hv.opts.Scatter(ylim=(0, None), color="red"),
     )
 
