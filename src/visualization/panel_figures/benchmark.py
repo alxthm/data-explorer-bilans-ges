@@ -369,7 +369,7 @@ def plot_n_bilans(df: pd.DataFrame, group_by: str):
         n_bilans = df["Id"].nunique()
         x[part_bilan_label] = x[n_bilan_label] / n_bilans * 100
     else:
-        y_col = "Nb. de bilans"
+        y_col = "Nombre de bilans"
         x = x.Id.nunique().rename(y_col)
 
     fig = x.plot(
