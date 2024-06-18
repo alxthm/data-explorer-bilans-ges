@@ -214,6 +214,11 @@ def plot_annee_publication(df):
     n_labels = x[LABELS.annee_reporting_rel_label].nunique()
     cmap = process_cmap("blues", ncolors=n_labels - 1) + ["darkred"]
 
+    # holoviews now supports continuous axis for hv.Bar, but it introduces
+    # strange bugs for us (divide by zero error with xdiff, for some reason)
+    # so simply revert to categorical axis.
+    x[LABELS.annee_publication] = x[LABELS.annee_publication].astype(str)
+
     def hook(plot, element):
         # fix the legend title, using the underlying bokeh API
         # https://discourse.holoviz.org/t/removing-legend-title/1317/2
