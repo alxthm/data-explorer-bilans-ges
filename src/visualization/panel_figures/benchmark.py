@@ -59,6 +59,7 @@ def get_df() -> pd.DataFrame:
     df[LABELS.secteur_activite] = (
         df[LABELS.secteur_activite].astype(str).str.replace("nan", "undefined")
     )
+    df[LABELS.scope_emissions] = df[LABELS.scope_emissions].astype(str)
     df.month_publication = pd.to_datetime(df.month_publication)
     df[LABELS.annee_publication] = df.month_publication.dt.year
     return df
