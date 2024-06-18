@@ -299,6 +299,7 @@ def plot_emissions(
     *,
     plot_col: str,
     group_by: str,
+    plot_average=True,
 ):
     x = df.copy()
 
@@ -332,7 +333,12 @@ def plot_emissions(
         case _:
             raise ValueError(plot_col)
 
-    return (box * scatter).opts(
+    if plot_average:
+        fig = (box * scatter)
+    else:
+        fig = box
+
+    return fig.opts(
         hv.opts(
             invert_axes=True,
             # This is important to properly clear the axes when changing widget options (otherwise, both the emission
