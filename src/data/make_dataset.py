@@ -164,13 +164,30 @@ def _load_emission_categories_code_to_name():
         ...  '1.2': '1.2 - Émissions directes des sources mobiles de combustion',
         ...  ...
         ...  '5.4': '5.4 - Investissements',
-        ...  '6.1': '6.1 - Autres émissions directes'}}
+        ...  '6.1': '6.1 - Autres émissions directes'},
+        ...  'nom_scope': {'1.1': '1',
+        ...  '1.2': '1',
+        ...  '1.3': '1',
+        ...  '1.4': '1',
+        ...  '1.5': '1',
+        ...  '2.1': '2',
+        ...  '2.2': '2',
+        ...  '3.1': '3',
+        ...  '3.2': '3',
+        ...  ...
+        ...  '5.4': '3',
+        ...  '6.1': '3'}}}
     """
     df_category_name = pd.read_csv(
         DATA_PATH / "raw/mapping-poste-emissions-ademe.csv", sep=";", dtype=str
     )
     poste_code_to_name = df_category_name.set_index("code").to_dict()
     # add explicit names
+    # Emission categories 1 and 2 = scope 1 and 2 (resp.). All other categories belong to scope 3.
+    poste_code_to_name["nom_scope"] = {
+        k: cat if (cat := k.split(".")[0]) in ("1", "2") else "3"
+        for k, v in poste_code_to_name["nom_poste"].items()
+    }
     poste_code_to_name["nom_poste"] = {
         k: f'{k.split(".")[0]} - {v}'
         for k, v in poste_code_to_name["nom_poste"].items()
@@ -220,6 +237,9 @@ def transform_to_benchmark_df(df_enriched: pd.DataFrame) -> pd.DataFrame:
     df["emissions_par_salarie"] = df["emissions"] / df["nb_salaries_mean"]
     # clip to 1 (instead of 0) to be able to apply log
     df["emissions_clipped"] = df["emissions"].clip(lower=1e-3)
+    df["scope_name"] = df["poste_emissions"].map(
+        lambda x: poste_code_to_name["nom_scope"][x]
+    )
     df["poste_name"] = df["poste_emissions"].map(
         lambda x: poste_code_to_name["nom_poste"][x]
     )
