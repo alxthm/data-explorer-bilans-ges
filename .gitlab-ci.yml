@@ -1,5 +1,8 @@
+image: alpine:latest
+
 variables:
   # no need to fetch LFS files
+  # (otherwise git raises an error if LFS is disabled for the repo)
   GIT_LFS_SKIP_SMUDGE: "1"
 
 workflow:
