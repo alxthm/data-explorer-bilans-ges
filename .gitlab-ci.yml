@@ -1,3 +1,7 @@
+variables:
+  # no need to fetch LFS files
+  GIT_LFS_SKIP_SMUDGE: "1"
+
 workflow:
   rules:
     - if: $CI_COMMIT_BRANCH
