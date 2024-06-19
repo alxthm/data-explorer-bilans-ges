@@ -17,7 +17,7 @@ template = pn.Template(
     """
 {% extends base %}
 {% block postamble %}
-    <script defer data-domain="alxthm-data-explorer-bilans-ges-ademe.hf.space" src="https://plausible.io/js/script.js"></script>
+    <script defer data-domain="alxthm-data-explorer-bilans-ges-ademe.hf.space" src="https://sh.alxthm.com/js/script.js"></script>
 {% endblock %}
     """
 )
