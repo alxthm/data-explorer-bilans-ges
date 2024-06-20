@@ -19,4 +19,7 @@ COPY ./setup.py .
 # hack: the '-e' option is here so that the data paths work (could be refactored)
 RUN python3 -m pip install --no-cache-dir -e .
 
-CMD ["panel", "serve", "/code/src/app.py", "--address", "0.0.0.0", "--port", "7860",  "--allow-websocket-origin", "*"]
+CMD [ "panel", "serve", "/code/src/app.py", \
+    "--address", "0.0.0.0", "--port", "7860", \
+    "--allow-websocket-origin", "*" \
+    "--reuse-sessions", "--global-loading-spinner" ]
