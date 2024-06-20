@@ -4,7 +4,7 @@ from src.visualization.panel_figures.benchmark import get_benchmark_dashboard
 from src.visualization.panel_figures.profiles import get_profiles_dashboard
 from src.visualization.utils import section
 
-pn.extension("plotly")
+pn.extension("plotly", defer_load=True, loading_indicator=True)
 
 # Load the custom CSS: increase app font size
 pn.config.raw_css.append("""
