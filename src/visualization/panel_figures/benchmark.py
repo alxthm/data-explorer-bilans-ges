@@ -57,7 +57,7 @@ def get_df() -> pd.DataFrame:
         }
     )
     df[LABELS.secteur_activite] = (
-        df[LABELS.secteur_activite].fillna('undefined').astype(str)
+        df[LABELS.secteur_activite].fillna("undefined").astype(str)
     )
     df[LABELS.scope_emissions] = df[LABELS.scope_emissions].astype(str)
     df.month_publication = pd.to_datetime(df.month_publication)
@@ -164,7 +164,18 @@ def get_benchmark_dashboard():
         plot_emissions, df=data, plot_col=plot_col, group_by=group_by
     )
     plot_n_bilans_widget = pn.bind(plot_n_bilans, df=data, group_by=group_by)
-    n_bilans_widget = pn.bind(n_bilans_text, df=data)
+    _n_bilans_text = pn.bind(n_bilans_text, df=data)
+
+    # Wrap the widget with a function that logs all the args for the request.
+    # This is purely for logging purposes (but cannot be done as a standalone pn.bind call,
+    # otherwise the callback is never called)
+    n_bilans_widget = pn.bind(
+        _log_request,
+        _n_bilans_text=_n_bilans_text,
+        plot_col=plot_col,
+        group_by=group_by,
+        **kwargs,
+    )
 
     filter_widgets = [
         pn.layout.Card(
@@ -242,7 +253,7 @@ def filter_options(
             x = x[x[col_name].isin(selected_options)]
 
     if kwargs:
-        raise ValueError(f'Remaining {kwargs=}')
+        raise ValueError(f"Remaining {kwargs=}")
 
     # drop nan values and zeros
     with pd.option_context("future.no_silent_downcasting", True):
@@ -334,7 +345,7 @@ def plot_emissions(
             raise ValueError(plot_col)
 
     if plot_average:
-        fig = (box * scatter)
+        fig = box * scatter
     else:
         fig = box
 
@@ -406,6 +417,11 @@ def n_bilans_text(df: pd.DataFrame):
 
 
 # Helper functions
+
+
+def _log_request(_n_bilans_text, **kwargs):
+    pn.state.log(f"get_benchmark_dashboard, n_bilans={_n_bilans_text}, {kwargs}")
+    return _n_bilans_text
 
 
 def _boxwhisker_upper_bound(x, group_by: str):
