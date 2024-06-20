@@ -21,5 +21,5 @@ RUN python3 -m pip install --no-cache-dir -e .
 
 CMD [ "panel", "serve", "/code/src/app.py", \
     "--address", "0.0.0.0", "--port", "7860", \
-    "--allow-websocket-origin", "*" \
+    "--allow-websocket-origin", "*", \
     "--reuse-sessions", "--global-loading-spinner" ]
