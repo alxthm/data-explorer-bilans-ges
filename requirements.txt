@@ -19,3 +19,5 @@ watchfiles  # for panel autoreload
 # devtools
 ruff
 pytest
+locust
+pyinstrument
