@@ -7,7 +7,7 @@ _SRC_PATH = Path(__file__).resolve().parent
 
 
 def section(name: str, extension: Literal["md", "html"] = "md"):
-    content = (_SRC_PATH / f"pages/{name}.{extension}").read_text()
+    content = (_SRC_PATH / f"text/{name}.{extension}").read_text()
     opts = dict(margin=20)
     if extension == "md":
         return pn.pane.Markdown(content, **opts)
