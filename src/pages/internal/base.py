@@ -1,5 +1,7 @@
 import panel as pn
+from pathlib import Path
 
+# TODO: find a way a load plotly only once for apps that need it
 pn.extension("plotly", defer_load=True, loading_indicator=True)
 
 
@@ -89,12 +91,17 @@ def get_template(main, page):
             }
             
             #content {
-                // thanks to this, the header bar can scroll with the content
-                // instead of being sticky
+                /* thanks to this, the header bar can scroll with the content
+                instead of being sticky */
                 overflow: visible;
             }
             """
         ],
+        # For search engines description
+        meta_description="Quelques graphiques pour mieux comprendre les bilans d'émission de gaz "
+        "à effet de serre (bilans GES) publiés sur le site de l'ADEME.",
+        meta_viewport="width=device-width, initial-scale=1",
+        favicon=(Path(__file__).parent / "favicon.svg").absolute(),
     )
 
     return template
