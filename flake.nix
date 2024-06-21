@@ -29,7 +29,8 @@
           pkgs.geckodriver
         ];
         nativeBuildInputs = with pkgs; [
-          stdenv.cc.cc.lib
+          gcc.cc
+          zlib
         ];
 
         shellHook = ''
@@ -41,7 +42,7 @@
           echo "Nix development shell loaded."
 
           # to be able to import numpy, on aarch64 linux
-          # export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib.outPath}/lib:$LD_LIBRARY_PATH"
+          export LD_LIBRARY_PATH="${pkgs.lib.strings.makeLibraryPath (with pkgs; [ gcc.cc zlib ])}"
 
           # specific to this project
           export PATH="$PATH:/Applications/Firefox.app/Contents/MacOS"
