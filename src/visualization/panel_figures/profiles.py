@@ -82,7 +82,7 @@ def get_df():
 @pn.cache
 def get_df_ademe():
     x = pd.read_csv(
-        DATA_PATH / "raw/rapport-beges-ademe-2022-annexe-1.csv", dtype={"Code NAF": str}
+        DATA_PATH / "raw/light/rapport-beges-ademe-2022-annexe-1.csv", dtype={"Code NAF": str}
     )
     x["Taux de conformité"] = x["Taux de conformité"].str.rstrip("%").astype(float)
     x = x[["Code NAF", "Nombre d'obligés", "Nombre conforme", "Taux de conformité"]]

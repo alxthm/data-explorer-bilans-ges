@@ -1,0 +1,75 @@
+Code NAF,Intitulé quad2.,Nombre d'obligés,Nombre conforme,Taux de conformité,Existence guide sectoriel,Nom du guide sectoriel
+01,"Culture et production animale, chasse et services annexe",4,4,100%,Oui,Fililère agricole et agro-alimentaire
+39,Dépollution et autres services de gestion des déchets,1,1,100%,Non,
+15,Industrie du cuir et de la chaussure,10,8,80%,Non,
+74,"Autres activités spécialisées, scientifiques et techniques",5,4,80%,Non,
+18,Imprimerie et reproduction d'enregistrements,4,3,75%,Non,
+27,Fabrication d'équipements électriques,36,24,67%,Non,
+24,Métallurgie,26,17,65%,Non,
+30,Fabrication d'autres matériels de transport,34,22,65%,Non,
+64,"Activités des services financiers, hors assurance et caisse",150,96,64%,Oui,Finance
+36,"Captage, traitement et distribution d'eau",11,7,64%,Oui,Eau et assainissement et gestion des déchets
+28,Fabrication de machines et équipements n.c.a.,57,35,61%,Non,
+11,Fabrication de boissons,15,9,60%,Oui,Industries agroalimentaire
+19,Cokéfaction et raffinage,5,3,60%,Non,
+37,Collecte et traitement des eaux usées,5,3,60%,Oui,Eau et assainissement et gestion des déchets
+29,Industrie automobile,57,34,60%,Non,
+26,"Fabrication de produits informatiques, électroniques et,",39,23,59%,Oui,"Numérique, information et communication"
+10,Industries alimentaires,120,69,58%,Oui,"Fililìre agricole et agro-alimentaire Industries agroalimentaire"
+96,Autres services personnels,7,4,57%,Non,
+38,"Collecte, traitement et élimination des déchets ; récupér",37,21,57%,Non,
+49,Transports terrestres et transport par conduites,89,50,56%,Non,
+20,Industrie chimique,47,26,55%,Oui,Industries chimiques
+32,Autres industries manufacturières,11,6,55%,Non,
+17,Industrie du papier et du carton,13,7,54%,Non,
+63,Services d'information,13,7,54%,Oui,"Numérique, information et communication"
+35,"Production et distribution d'électricité, de gaz, de vapeun",15,8,53%,Non,
+70,Activités des sièges sociaux ; conseil de gestion,97,51,53%,Non,
+52,Entreposage et services auxiliaires des transports,72,37,51%,Oui quad r,"Transport et logistique (52.23Z, 52.23Z, 52.29A, 52.29B)"
+42,Génie civil,55,28,51%,Oui,"Batiments et Travaux publics (42) et Eau et assainisement et gestion des déchets (42.21)"
+14,Industrie de l'habillement,4,2,50%,Non,
+22,Fabrication de produits en caoutchouc et en plastique,28,14,50%,Non,
+53,Activités de poste et de courrier,4,2,50%,Non,
+59,"Production de films cinématographiques, de vidéo et de",4,2,50%,Non,
+25,"Fabrication de produits métalliques, à l'exception des mi.",37,18,49%,Non,
+43,Travaux de construction spécialisés,64,31,48%,Oui,"Batiments et Travaux publics (43. et 43.21B) et Ameublement (43.32C)"
+41,Construction de bâtiments,25,12,48%,Non,
+21,Industrie pharmaceutique,38,18,47%,Oui,Industries chimiques
+81,Services relatifs aux bâtiments et aménagement paysage,98,46,47%,Oui,"Propreté (81.21,81.22,81.29B)"
+46,"Commerce de gros, à l'exception des automobiles et des",190,87,46%,"Oui {fc070d088-0a7b-4ff9-aaea-f8613fb2e2bd} Oui",Fililère agricole et agro-alimentaire
+56,Restauration,59,27,46%,Non,
+62,"Programmation, conseil et autres activités informatiques",78,35,45%,Oui,"Numérique, information et communication"
+73,Publicité et études de marché,16,7,44%,Non,
+65,Assurance,87,38,44%,Oui,Finance
+77,Activités de location et location-bail,23,10,43%,Non,
+23,Fabrication d'autres produits minéraux non métalliques,35,15,43%,Non,
+60,Programmation et diffusion,7,3,43%,Non,
+95,Réparation d'ordinateurs et de biens personnels et dom,7,3,43%,Oui,"Numérique, information et communication (95.1,95.212)"
+72,Recherche-développement scientifique,31,13,42%,Non,
+16,Travail du bois et fabrication d'articles en bois et en liège,5,2,40%,Non,
+45,Commerce et réparation d'automobiles et de motocycle.,25,10,40%,Non,
+61,Télécommunications,15,6,40%,Oui,"Numérique, information et communication"
+84,Administration publique et défense ; sécurité sociale ob|,283,113,40%,"Oui {ff160e769-f030-4cf1-a293-18063fff704f} Oui",Tertiaire non marchand
+71,Activités d'architecture et d'ingénierie ; activités de conty,78,31,40%,Non,
+58,Édition,28,11,39%,Non,
+78,Activités liées à l'emploi,19,7,37%,Non,
+68,Activités immobilières,75,27,36%,Non,
+51,Transports aériens,14,5,36%,Oui,Transport et logistique
+47,"Commerce de détail, à l'exception des automobiles et dE",207,69,33%,Oui,Distribution - Commerce de détail
+82,Activités administratives et autres activités de soutien an,61,20,33%,Non,
+80,Enquêtes et sécurité,43,14,33%,Non,
+33,Réparation et installation de machines et d'équipements,22,7,32%,Non,
+66,Activités auxiliaires de services financiers et d'assurance,32,10,31%,Oui,Finance
+31,Fabrication de meubles,13,4,31%,Oui,Ameublement
+86,Activités pour la santé humaine,717,220,31%,Oui,Etablissements sanitaires et médico-sociaux
+69,Activiés juridiques et comptables,26,7,27%,Non,
+50,Transports par eau,9,2,22%,Non,
+55,Hébergement,24,4,17%,Non,
+94,Activités des organisations associatives,30,5,17%,Oui,Tertiaire non marchand (94.99)
+87,Hébergement médico-social et social,168,25,15%,Oui,Etablissements sanitaires et médico-sociaux
+90,"Activités créatives, artistiques et de spectacle",7,1,14%,Non,
+85,Enseignement,314,40,13%,Non,
+79,"Activités des agences de voyage, voyagistes, services de",9,1,11%,Non,
+93,"Activités sportives, récréatives et de loisirs",11,1,9%,Non,"Nouveau guide filière Sport, Montagne et Tourisme"
+88,Action sociale sans hébergement,311,27,9%,Non,
+91,"Bibliothèques, archives, musées et autres activités cultur",13,1,8%,Non,

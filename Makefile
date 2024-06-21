@@ -22,9 +22,9 @@ PYTHON_INTERPRETER = python3
 freeze_requirements:
 	$(PYTHON_INTERPRETER) -m venv .venv_for_lock
 	. .venv_for_lock/bin/activate && \
-    	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel && \
-        $(PYTHON_INTERPRETER) -m pip install -r requirements.txt && \
-        $(PYTHON_INTERPRETER) -m pip freeze > requirements.lock.txt && \
+		$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel && \
+		$(PYTHON_INTERPRETER) -m pip install -r requirements.txt && \
+		$(PYTHON_INTERPRETER) -m pip freeze > requirements.lock.txt && \
 	rm -rf .venv_for_lock
 
 install_requirements:
@@ -33,7 +33,18 @@ install_requirements:
 	$(PYTHON_INTERPRETER) -m pip install -e .
 
 ## Make Dataset
-data: requirements
+# For now:
+# * non-heavy data is simply checked out to git (in the data/raw/light/ folder)
+# * heavier data (>10Mb) is put inside the data/raw/uncompressed folder (not checked out to git)
+#   and compressed into a .tar.gz file (checked out to git for now since it's still small)
+# * processed data is not checked out to git
+compress_data:
+	tar zcvf data/raw/compressed-data.tar.gz data/raw/uncompressed/
+
+data/raw/uncompressed:
+	tar zxf data/raw/compressed-data.tar.gz
+
+data: data/raw/uncompressed
 	$(PYTHON_INTERPRETER) src/data/make_dataset.py
 
 ## Delete all compiled Python files

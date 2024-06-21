@@ -1,0 +1,23 @@
+nom_poste;code;nom_sous_poste
+Émissions directes;1.1;Émissions directes des sources fixes de combustion
+Émissions directes;1.2;Émissions directes des sources mobiles de combustion
+Émissions directes;1.3;Émissions directes des procédés hors énergie
+Émissions directes;1.4;Émissions directes fugitives
+Émissions directes;1.5;Émissions issues de la biomasse (sols et forêts)
+Énergie;2.1;Émissions indirectes liées à la consommation d'électricité
+Énergie;2.2;Émissions indirectes liées à la consommation d'énergie autre que l'électricité
+Déplacement;3.1;Transport de marchandise amont
+Déplacement;3.2;Transport de marchandise aval
+Déplacement;3.3;Déplacements domicile-travail
+Déplacement;3.4;Déplacements des visiteurs et des clients
+Déplacement;3.5;Déplacements professionnels
+Produits achetés;4.1;Achat de biens
+Produits achetés;4.2;Immobilisation de biens
+Produits achetés;4.3;Gestion des déchets
+Produits achetés;4.4;Actifs en leasing amont
+Produits achetés;4.5;Achat de services
+Produits vendus;5.1;Utilisation des produits vendus
+Produits vendus;5.2;Actifs en leasing aval
+Produits vendus;5.3;Fin de vie des produits vendus
+Produits vendus;5.4;Investissements
+Autres émissions indirectes;6.1;Autres émissions directes

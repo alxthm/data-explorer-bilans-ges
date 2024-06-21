@@ -17,6 +17,8 @@ COPY ./src ./src
 COPY ./setup.py .
 COPY ./Makefile .
 
+RUN make data
+
 # hack: the '-e' option is here so that the data paths work (could be refactored)
 RUN python3 -m pip install --no-cache-dir -e .
 

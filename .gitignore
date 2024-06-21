@@ -1,5 +1,10 @@
 # My project
-data/
+data/*
+!data/raw
+data/raw/*
+!data/raw/light
+# keep it in git for now, since it's light
+!data/raw/compressed-data.tar.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

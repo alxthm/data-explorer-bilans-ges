@@ -12,14 +12,14 @@ def _load_naf5_to_nafi_data() -> dict[str, dict[str, str]]:
     # 01.11Z	01.11	01.1	01	    A
     # 01.12Z	01.12	01.1	01	    A
     _df_naf_5_niveaux = pd.read_excel(
-        DATA_PATH / "raw/naf2008_5_niveaux.xls", dtype=str
+        DATA_PATH / "raw/light/naf2008_5_niveaux.xls", dtype=str
     )
     _naf5_to_nafi = _df_naf_5_niveaux.set_index("NIV5").to_dict()
     return _naf5_to_nafi
 
 
 def _load_naf_to_libelle_data() -> dict[str, dict[str, str]]:
-    df_naf_v1_to_v2 = pd.read_excel(DATA_PATH / "raw/table_NAF2-NAF1.xls")
+    df_naf_v1_to_v2 = pd.read_excel(DATA_PATH / "raw/light/table_NAF2-NAF1.xls")
     df_naf_v1_to_v2 = df_naf_v1_to_v2.rename(
         columns={f"NAF\nrév. {i}": f"naf_v{i}" for i in (1, 2)}
     )
@@ -28,7 +28,7 @@ def _load_naf_to_libelle_data() -> dict[str, dict[str, str]]:
     _naf_to_libelle = {}
     for n in range(1, 5):
         df_naf = pd.read_excel(
-            DATA_PATH / f"raw/naf2008_liste_n{n}.xls", skiprows=2, dtype={"Code": str}
+            DATA_PATH / f"raw/light/naf2008_liste_n{n}.xls", skiprows=2, dtype={"Code": str}
         )
         _naf_to_libelle[f"NIV{n}"] = df_naf.set_index("Code").to_dict()["Libellé"]
     return _naf_to_libelle
@@ -179,7 +179,7 @@ def _load_emission_categories_code_to_name():
         ...  '6.1': '3'}}}
     """
     df_category_name = pd.read_csv(
-        DATA_PATH / "raw/mapping-poste-emissions-ademe.csv", sep=";", dtype=str
+        DATA_PATH / "raw/light/mapping-poste-emissions-ademe.csv", sep=";", dtype=str
     )
     poste_code_to_name = df_category_name.set_index("code").to_dict()
     # add explicit names
@@ -276,7 +276,7 @@ def main():
     cleaned data ready to be analyzed (saved in ../processed).
     """
     df_raw = pd.read_csv(
-        DATA_PATH / "raw/export-inventaires-opendata-28-09-2023.csv", sep=";"
+        DATA_PATH / "raw/uncompressed/export-inventaires-opendata-28-09-2023.csv", sep=";"
     )
 
     df_enriched = enrich_df(df_raw)
