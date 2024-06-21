@@ -4,53 +4,61 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs }:
-    let
-      allSystems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+  }:
+    flake-utils.lib.eachDefaultSystem (system: let
+      pname = "python dev environment";
+      pkgs = import nixpkgs {inherit system;};
+      python = pkgs.python311;
+    in {
+      formatter = pkgs.alejandra;
 
-      # Helper to provide system-specific attributes
-      forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
-        pkgs = import nixpkgs { inherit system; };
-      });
-    in
-    {
       # Development environment output
-      devShells = forAllSystems ({ pkgs }: {
-        default =
-          let
-            python = pkgs.python311;
-          in
-          pkgs.mkShell {
-            # The Nix packages provided in the environment
-            packages = [
-              # Python plus helper tools
-              (python.withPackages (ps: with ps; [
-                virtualenv
-                pip
-              ]))
-              # specific to this project
-              pkgs.geckodriver
-            ];
+      devShell = pkgs.mkShell rec {
+        # The Nix packages provided in the environment
+        packages = [
+          # Python plus helper tools
+          (python.withPackages (ps: with ps; [virtualenv pip]))
+          # specific to this project
+          pkgs.geckodriver
+        ];
+        nativeBuildInputs = with pkgs; [
+          stdenv.cc.cc.lib
+        ];
 
-            shellHook = ''
-            if [[ ! -d .venv ]]; then
-              echo "No virtual env found at ./.venv, creating a new virtual env linked to the Python site defined with Nix. Make sure to install your requirements."
-              ${python}/bin/python -m venv .venv
-            fi
-            source .venv/bin/activate
-            echo "Nix development shell loaded."
+        shellHook = ''
+          if [[ ! -d .venv ]]; then
+            echo "No virtual env found at ./.venv, creating a new virtual env linked to the Python site defined with Nix. Make sure to install your requirements."
+            ${python}/bin/python -m venv .venv
+          fi
+          source .venv/bin/activate
+          echo "Nix development shell loaded."
 
-            # specific to this project
-            export PATH="$PATH:/Applications/Firefox.app/Contents/MacOS"
-          '';
-          };
-      });
-    };
+          # to be able to import numpy, on aarch64 linux
+          # export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib.outPath}/lib:$LD_LIBRARY_PATH"
+
+          # specific to this project
+          export PATH="$PATH:/Applications/Firefox.app/Contents/MacOS"
+        '';
+      };
+
+      # Ideally, we could run the panel app in the flake output,
+      # but i have not managed to make it work yet
+      # packages.client = pkgs.writeScriptBin "client-script" ''
+      #   ${python}/bin/python --version
+      # '';
+      # apps = {
+      #   type = "app";
+      #   program = "${self.packages.runme}/bin/runme";
+      #   #          program = "${pkgs.python3}/bin/python";
+      #   #          args = [ "--version" ];
+      #   #          src = "./.";
+      # };
+    });
 }

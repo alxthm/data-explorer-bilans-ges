@@ -1,3 +1,5 @@
+import locale
+
 from dataclasses import dataclass
 from holoviews.plotting.util import process_cmap
 from typing import Optional, Any
@@ -248,9 +250,14 @@ def plot_annee_bilan(df):
 
 def plot_mois_publication(df):
     x = df.rename(columns=_LABELS_NUNIQUE)
-    x.month_publication = pd.to_datetime(x.month_publication)
+    # x.month_publication = pd.to_datetime(x.month_publication)
     x["month_publication_digit"] = x.month_publication.dt.month
-    x["Mois de la publication"] = x.month_publication.dt.month_name("fr_FR.UTF-8")
+    try:
+        month_name = x.month_publication.dt.month_name("fr_FR.UTF-8")
+    except locale.Error:
+        # on some systems (nixos..), this seems to be the locale available
+        month_name = x.month_publication.dt.month_name("fr_FR.utf8")
+    x["Mois de la publication"] = month_name
     x = x.groupby(["month_publication_digit", "Mois de la publication"])
     x = x[LABELS.n_bilans].nunique()
     return x.plot(x="Mois de la publication", kind="bar", **SIZE)
