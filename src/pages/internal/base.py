@@ -95,11 +95,14 @@ def get_template(main, page):
                 instead of being sticky */
                 overflow: visible;
             }
+            </style>
+            <script defer data-domain="bilans-ges.fr" src="https://sh.alxthm.com/js/script.js"></script>
+            <style>
             """
         ],
         # For search engines description
         meta_description="Quelques graphiques pour mieux comprendre les bilans d'émission de gaz "
-        "à effet de serre (bilans GES) publiés sur le site de l'ADEME.",
+                         "à effet de serre (bilans GES) publiés sur le site de l'ADEME.",
         meta_viewport="width=device-width, initial-scale=1",
         favicon=(Path(__file__).parent / "favicon.svg").absolute(),
     )
