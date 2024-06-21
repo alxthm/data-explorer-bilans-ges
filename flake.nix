@@ -35,7 +35,21 @@
                 virtualenv
                 pip
               ]))
+              # specific to this project
+              pkgs.geckodriver
             ];
+
+            shellHook = ''
+            if [[ ! -d .venv ]]; then
+              echo "No virtual env found at ./.venv, creating a new virtual env linked to the Python site defined with Nix. Make sure to install your requirements."
+              ${python}/bin/python -m venv .venv
+            fi
+            source .venv/bin/activate
+            echo "Nix development shell loaded."
+
+            # specific to this project
+            export PATH="$PATH:/Applications/Firefox.app/Contents/MacOS"
+          '';
           };
       });
     };

@@ -6,6 +6,9 @@ data/raw/*
 # keep it in git for now, since it's light
 !data/raw/compressed-data.tar.gz
 
+# Nix
+.direnv/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -17,6 +20,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 build/
 develop-eggs/
 dist/
