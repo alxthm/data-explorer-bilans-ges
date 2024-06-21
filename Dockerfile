@@ -15,15 +15,9 @@ RUN python3 -m pip install --no-cache-dir -r /code/requirements.lock.txt
 COPY ./data ./data
 COPY ./src ./src
 COPY ./setup.py .
+COPY ./Makefile .
 
 # hack: the '-e' option is here so that the data paths work (could be refactored)
 RUN python3 -m pip install --no-cache-dir -e .
 
-CMD [ "panel", "serve", \
-    "--address", "0.0.0.0", "--port", "7860", \
-    "--allow-websocket-origin", "*", \
-    "--reuse-sessions", "--global-loading-spinner", \
-    "/code/src/pages/benchmark.py", \
-    "/code/src/pages/profiles.py", \
-    "/code/src/pages/about.py", \
-    "--index", "/code/src/pages/benchmark.py" ]
+CMD [ "make", "serve" ]

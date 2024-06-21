@@ -45,6 +45,16 @@ clean:
 lint:
 	ruff format
 
+serve:
+	panel serve \
+		--address "0.0.0.0" --port 7860 \
+		--allow-websocket-origin "*" \
+		--global-loading-spinner \
+		--reuse-sessions \
+		--num-procs 2 \
+		./src/pages/benchmark.py ./src/pages/profiles.py ./src/pages/about.py \
+		--index ./src/pages/benchmark.py
+
 # ## Set up python interpreter environment
 # create_environment:
 # ifeq (True,$(HAS_CONDA))
