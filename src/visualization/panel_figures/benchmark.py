@@ -223,7 +223,7 @@ def get_benchmark_dashboard():
         ),
         pn.Column(
             "## Notes",
-            section("benchmark/notes"),
+            section("benchmark/notes", "sources"),
             styles={
                 # Set flex-grow to 0 so the notes don't get priority for growing. They can shrink if needed though
                 "flex": "0 1 auto",

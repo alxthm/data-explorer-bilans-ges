@@ -6,8 +6,10 @@ from typing import Literal
 _SRC_PATH = Path(__file__).resolve().parent
 
 
-def section(name: str, extension: Literal["md", "html"] = "md"):
-    content = (_SRC_PATH / f"text/{name}.{extension}").read_text()
+def section(*names: str, extension: Literal["md", "html"] = "md"):
+    content = "\n".join(
+        (_SRC_PATH / f"text/{name}.{extension}").read_text() for name in names
+    )
     opts = dict(margin=20)
     if extension == "md":
         return pn.pane.Markdown(content, **opts)

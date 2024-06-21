@@ -72,7 +72,7 @@ def get_template(main, page):
     """)
 
     template = pn.template.VanillaTemplate(
-        title="Data Explorer - Bilans GES ADEME",
+        title="Data Explorer - Bilans GES",
         main=[main],
         header=_get_navbar_links(page),
         header_background="--panel-background-color",
