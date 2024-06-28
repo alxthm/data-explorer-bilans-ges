@@ -35,16 +35,17 @@ install_requirements:
 ## Make Dataset
 # For now:
 # * non-heavy data is simply checked out to git (in the data/raw/light/ folder)
-# * heavier data (>10Mb) is put inside the data/raw/uncompressed folder (not checked out to git)
-#   and compressed into a .tar.gz file (checked out to git for now since it's still small)
+# * heavier data (>10Mb) should be put inside the data/raw/heavy folder (not checked out to git)
+#   and compressed into individual .gz files (checked out to git for now since it's still small)
 # * processed data is not checked out to git
 compress_data:
-	tar zcvf data/raw/compressed-data.tar.gz data/raw/uncompressed/
+	gzip -k -r data/raw/heavy/
 
-data/raw/uncompressed:
-	tar zxf data/raw/compressed-data.tar.gz
+data/raw/heavy/data_uncompressed:
+	gzip -k -r -d data/raw/heavy/
+	touch data/raw/heavy/data_uncompressed
 
-data: data/raw/uncompressed
+data: data/raw/heavy/data_uncompressed
 	$(PYTHON_INTERPRETER) src/data/make_dataset.py
 
 ## Delete all compiled Python files

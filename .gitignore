@@ -1,10 +1,9 @@
 # My project
 data/*
-!data/raw
-data/raw/*
-!data/raw/light
 # keep it in git for now, since it's light
-!data/raw/compressed-data.tar.gz
+!data/raw
+data/raw/heavy/*
+!data/raw/heavy/export-inventaires-opendata-28-09-2023.csv.gz
 
 # Nix
 .direnv/

@@ -276,7 +276,7 @@ def main():
     cleaned data ready to be analyzed (saved in ../processed).
     """
     df_raw = pd.read_csv(
-        DATA_PATH / "raw/uncompressed/export-inventaires-opendata-28-09-2023.csv", sep=";"
+        DATA_PATH / "raw/heavy/export-inventaires-opendata-28-09-2023.csv", sep=";"
     )
 
     df_enriched = enrich_df(df_raw)
