@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 
-DATA_PATH = Path(__file__).resolve().parents[2] / "data/"
+from src.settings import DATA_PATH, RAW_ADEME_DATA_PATH
 
 
 def _load_naf5_to_nafi_data() -> dict[str, dict[str, str]]:
@@ -28,7 +26,9 @@ def _load_naf_to_libelle_data() -> dict[str, dict[str, str]]:
     _naf_to_libelle = {}
     for n in range(1, 5):
         df_naf = pd.read_excel(
-            DATA_PATH / f"raw/light/naf2008_liste_n{n}.xls", skiprows=2, dtype={"Code": str}
+            DATA_PATH / f"raw/light/naf2008_liste_n{n}.xls",
+            skiprows=2,
+            dtype={"Code": str},
         )
         _naf_to_libelle[f"NIV{n}"] = df_naf.set_index("Code").to_dict()["Libellé"]
     return _naf_to_libelle
@@ -264,7 +264,7 @@ def _clean_and_add_scope_3(df_a, df_b):
     # compute which Id have scope 3 data or not
     scope3 = df_b.groupby(["Id", "scope_name"], as_index=False).emissions.sum()
     scope3.emissions = scope3.emissions.fillna(0)
-    scope3 = scope3[scope3.scope_name == '3']
+    scope3 = scope3[scope3.scope_name == "3"]
     scope3["has_scope_3"] = scope3.emissions.ne(0)
     scope3 = scope3[["Id", "has_scope_3"]]
 
@@ -275,9 +275,7 @@ def main():
     """Runs data processing scripts to turn raw data from (../raw) into
     cleaned data ready to be analyzed (saved in ../processed).
     """
-    df_raw = pd.read_csv(
-        DATA_PATH / "raw/heavy/export-inventaires-opendata-21-07-2024.csv", sep=";"
-    )
+    df_raw = pd.read_csv(RAW_ADEME_DATA_PATH, sep=";")
 
     df_enriched = enrich_df(df_raw)
     df_benchmark = transform_to_benchmark_df(df_enriched)

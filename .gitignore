@@ -4,7 +4,9 @@ data/*
 !data/raw
 data/raw/heavy/*
 !data/raw/heavy/export-inventaires-opendata-28-09-2023.csv.gz
-!data/raw/heavy/export-inventaires-opendata-21-07-2024.csv.gz
+!data/interim
+data/interim/*
+!data/interim/synthese_bilans_financiers_ademe_only.csv
 
 # Nix
 .direnv/
