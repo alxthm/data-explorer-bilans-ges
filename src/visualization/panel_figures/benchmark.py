@@ -65,7 +65,14 @@ def get_df() -> pd.DataFrame:
     return df
 
 
-def get_multi_choice(df: pd.DataFrame, col: str, name=None, sort=False, options=None):
+def get_multi_choice(
+    df: pd.DataFrame,
+    col: str,
+    name=None,
+    sort=False,
+    options=None,
+    default: list[str] | None = None,
+):
     if options is None:
         options = df[col].unique().tolist()
         if sort:
@@ -88,12 +95,16 @@ def get_multi_choice(df: pd.DataFrame, col: str, name=None, sort=False, options=
         def widget(self):
             return pn.Param(self, widgets={"selected_options": MultiChoice})
 
-    return MultiChoiceWithAll(name=name or col)
+    choice = MultiChoiceWithAll(name=name or col)
+    if default is not None:
+        choice.select_all = False
+        choice.selected_options = default
+    return choice
 
 
 _FILTERS_WITH_HIERARCHY = {
     "Filtrer les bilans": dict(
-        type_structure=dict(col=LABELS.type_structure),
+        type_structure=dict(col=LABELS.type_structure, default=['Entreprise']),
         secteur_activite=dict(col=LABELS.secteur_activite),
     ),
     "Filtrer le périmètre": dict(
@@ -142,8 +153,8 @@ def get_benchmark_dashboard():
     )
     group_by = pn.widgets.Select(
         name="Group by (axe y)",
-        # options=GROUP_BY_OPTIONS,
         groups=GROUP_BY_OPTIONS,
+        value=LABELS.annee_reporting,
     )
     widgets = {
         section_title: {key: get_multi_choice(df, **kw) for key, kw in opts.items()}

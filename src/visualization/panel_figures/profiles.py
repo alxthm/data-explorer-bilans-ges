@@ -277,7 +277,7 @@ def plot_share_scope_3(df):
     b = (
         df.groupby(LABELS.annee_reporting)
         .Id.nunique()
-        .rename("Nombre de bilans déposés")
+        .rename("Nombre de bilans")
         .plot(kind="scatter")
     )
 
