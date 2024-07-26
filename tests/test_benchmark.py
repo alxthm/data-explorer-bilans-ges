@@ -41,7 +41,7 @@ def test_full_data(df):
     )
 
 
-def test_filter_options():
+def _return_test_filter_options():
     # Build a random (but reproducible, thanks to the seed) set of filtering options
     # that a user could choose.
     # This can be a starting point to then manually adjust.
