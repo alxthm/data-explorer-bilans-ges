@@ -1,21 +1,19 @@
----
-title: Data Explorer - Bilans GES ADEME
-emoji: 🌍
-colorFrom: gray
-colorTo: blue
-sdk: docker
-license: mit
-short_description: Analyse et benchmark des données de Bilans GES de l'ADEME
----
+# Data Explorer - Bilans GES
 
-# Analyse et benchmark des données de Bilans GES de l'ADEME
+Ce site regroupe des graphiques et analyses sur les bilans d'émission de gaz à effet de serre (bilans GES) disponibles sur [le site de l'ADEME](https://bilans-ges.ademe.fr/). C'est un petit projet personnel que j'ai développé par curiosité, pour découvrir le domaine de la comptabilité environnementale.
 
-# Deployment
+Il est disponible à l'adresse https://www.bilans-ges.fr.
 
-The panel app is deployed to huggingface spaces (everything is defined in the `Dockerfile`).
+## Contribuer
 
-Since huggingface spaces do not support custom domains yet, the `index.html` file is also deployed to gitlab pages, as a wrapper around the panel app, to allow custom domain.
+🚧 Le site est en version _beta_. Il se peut qu'il y ait encore des erreurs. Tous les retours, suggestions et contributions sont bienvenues !
 
-Notes :
-* in order for git lfs to work with hf, it seems that using https is necessary (rather than git ssh), see https://discuss.huggingface.co/t/git-lfs-fetch-with-git-protocol-is-failing/84831/5
-* to avoid pushing LFS objects to gitlab, on the client side you can run `git config remote.gitlab.lfsurl ""` (if `gitlab` is the name of the remote), and on the server side, in Gitlab project settings (General / Visibility) you can disable LFS
+Voir [`CONTRIBUTING.md`](CONTRIBUTING.md) pour plus d'informations.
+
+## Contact
+
+Si le projet vous est utile ou vous inspire, je serais ravi d'échanger (par e-mail : hi@alxthm.com).
+
+## License
+
+Distribué sous la license MIT. Voir [`LICENSE`](LICENSE) pour plus d'informations.

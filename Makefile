@@ -1,52 +1,54 @@
+# Run these targets always (even if a file named like this already exists)
 .PHONY: clean data lint requirements
 
-#################################################################################
-# GLOBALS                                                                       #
-#################################################################################
-
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-PROFILE = default
-PROJECT_NAME = benchmark-footprints
-PYTHON_INTERPRETER = python3
+PYTHON = python3
+VENV = .venv
 
-#################################################################################
-# COMMANDS                                                                      #
-#################################################################################
-
-## Install Python Dependencies
-# For now:
+# --- How do we manage Python dependencies for now ?
 # * requirements.txt is used as the base source of requirements (could be moved to a pyproject.toml...)
 # * requirements.lock.txt is generated from it (we could use pip-tools for this...),
-#   and used for both local venv and remote docker image
 
-freeze_requirements:
-	$(PYTHON_INTERPRETER) -m venv .venv_for_lock
+$VENV:
+	$(PYTHON) -m venv $(VENV)
+
+## Create a venv (if necessary) and install python dependencies
+install: $VENV
+	. $(VENV)/bin/activate && \
+		$(PYTHON) -m pip install -U pip setuptools wheel && \
+		$(PYTHON) -m pip install -r requirements.lock.txt && \
+		$(PYTHON) -m pip install -e .
+
+## Generate a requirements.lock.txt file from requirements.txt
+## (by creating a new temporary environment)
+freeze-requirements:
+	$(PYTHON) -m venv .venv_for_lock
 	. .venv_for_lock/bin/activate && \
-		$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel && \
-		$(PYTHON_INTERPRETER) -m pip install -r requirements.txt && \
-		$(PYTHON_INTERPRETER) -m pip freeze > requirements.lock.txt && \
+		$(PYTHON) -m pip install -U pip setuptools wheel && \
+		$(PYTHON) -m pip install -r requirements.txt && \
+		$(PYTHON) -m pip freeze > requirements.lock.txt && \
 	rm -rf .venv_for_lock
 
-install_requirements:
-	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
-	$(PYTHON_INTERPRETER) -m pip install -r requirements.lock.txt
-	$(PYTHON_INTERPRETER) -m pip install -e .
-
-## Make Dataset
-# For now:
+# --- How is data handled for now ?
 # * non-heavy data is simply checked out to git (in the data/raw/light/ folder)
 # * heavier data (>10Mb) should be put inside the data/raw/heavy folder (not checked out to git)
 #   and compressed into individual .gz files (checked out to git for now since it's still small)
 # * processed data is not checked out to git
-compress_data:
+
+## Compress raw data (to add new data files)
+compress-data:
 	gzip -k -r data/raw/heavy/
 
+## Uncompress raw data
 data/raw/heavy/data_uncompressed:
 	gzip -k -r -d data/raw/heavy/
+	# this file indicates that we have already uncompressed data,
+	# no need to do this step again to build the dataset
 	touch data/raw/heavy/data_uncompressed
 
+## Process raw data into datasets that the app can use
 data: data/raw/heavy/data_uncompressed
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py
+	$(PYTHON) src/data/make_dataset.py
 
 ## Delete all compiled Python files
 clean-python:
@@ -57,10 +59,14 @@ clean-python:
 clean-data:
 	git clean -xdf data/
 
+## Delete untracked data files and compiled python files
+clean: clean-data clean-python
+
 ## Lint using ruff
 lint:
 	ruff format
 
+## Start the app locally
 serve:
 	panel serve \
 		--address "0.0.0.0" --port 7860 \
@@ -71,29 +77,9 @@ serve:
 		./src/pages/benchmark.py ./src/pages/profiles.py ./src/pages/about.py \
 		--index ./src/pages/benchmark.py
 
-# ## Set up python interpreter environment
-# create_environment:
-# ifeq (True,$(HAS_CONDA))
-# 		@echo ">>> Detected conda, creating conda environment."
-# ifeq (3,$(findstring 3,$(PYTHON_INTERPRETER)))
-# 	conda create --name $(PROJECT_NAME) python=3
-# else
-# 	conda create --name $(PROJECT_NAME) python=2.7
-# endif
-# 		@echo ">>> New conda env created. Activate with:\nsource activate $(PROJECT_NAME)"
-# else
-# 	$(PYTHON_INTERPRETER) -m pip install -q virtualenv virtualenvwrapper
-# 	@echo ">>> Installing virtualenvwrapper if not already installed.\nMake sure the following lines are in shell startup file\n\
-# 	export WORKON_HOME=$$HOME/.virtualenvs\nexport PROJECT_HOME=$$HOME/Devel\nsource /usr/local/bin/virtualenvwrapper.sh\n"
-# 	@bash -c "source `which virtualenvwrapper.sh`;mkvirtualenv $(PROJECT_NAME) --python=$(PYTHON_INTERPRETER)"
-# 	@echo ">>> New virtualenv created. Activate with:\nworkon $(PROJECT_NAME)"
-# endif
-
-#################################################################################
-# PROJECT RULES                                                                 #
-#################################################################################
-
-
+## Run pytest
+test:
+	pytest
 
 #################################################################################
 # Self Documenting Commands                                                     #
