@@ -1,0 +1,2 @@
+# Exclude notebooks from language stats
+notebooks/** linguist-documentation
