@@ -4,6 +4,9 @@
 
 Il se peut qu'il y ait encore des erreurs, tous les retours sont bienvenus !
 
+🐧 **Open-source**
+
+Le code source derrière ce site est [disponible sur Github](https://github.com/alxthm/data-explorer-bilans-ges).
 
 ℹ️ **Pourquoi ce site ?**
 
