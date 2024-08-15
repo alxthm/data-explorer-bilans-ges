@@ -1,8 +1,9 @@
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
-from src.settings import DATA_PATH, RAW_ADEME_DATA_PATH
+from src.settings import DATA_PATH, RAW_ADEME_DATA_PATH, FILTERED_FINANCIAL_DATA_PATH
 
 
 def _load_naf5_to_nafi_data() -> dict[str, dict[str, str]]:
@@ -198,6 +199,25 @@ def _load_emission_categories_code_to_name():
     return poste_code_to_name
 
 
+def add_financial_data(df):
+    """Add financial data from INPI (CA / resultat_net) to the ADEME dataset.
+
+    Limitations:
+        * This almost only affects entries with type_structure='Entreprises'.
+        * For now, the financial dataset only contains data for years >=2019.
+    """
+    df_financial = pd.read_csv(FILTERED_FINANCIAL_DATA_PATH, dtype={"siren": str})
+    df_financial = df_financial.rename(columns={"type_bilan": "type_bilan_financier"})
+    df = pd.merge(
+        df,
+        df_financial.rename(columns={"siren": "SIREN principal"}),
+        left_on=["SIREN principal", "Année de reporting"],
+        right_on=["SIREN principal", "annee_cloture_exercice"],
+        how="left",
+    )
+    return df
+
+
 def transform_to_benchmark_df(df_enriched: pd.DataFrame) -> pd.DataFrame:
     poste_code_to_name = _load_emission_categories_code_to_name()
 
@@ -228,6 +248,8 @@ def transform_to_benchmark_df(df_enriched: pd.DataFrame) -> pd.DataFrame:
             "month_publication",
             "Année de reporting",
             "Structure obligée",
+            "ca",
+            "resultat_net",
         ],
         value_vars=_emission_cols,
         value_name="emissions",
@@ -237,6 +259,17 @@ def transform_to_benchmark_df(df_enriched: pd.DataFrame) -> pd.DataFrame:
     df["emissions_par_salarie"] = df["emissions"] / df["nb_salaries_mean"]
     # clip to 1 (instead of 0) to be able to apply log
     df["emissions_clipped"] = df["emissions"].clip(lower=1e-3)
+    # Get the carbon monetary intensity when we can.
+    df["emissions_par_CA_kgco2_keur"] = df["emissions"] * 1e3 / (df["ca"] * 1e-3)
+    # In many cases, df.ca can be
+    #   * nan: if we were not able to match the bilan with INPI data
+    #   * 0.: happens for some INPI entries
+    # As a result, the carbon intensity will be either nan (0 / 0, or x / nan) or inf (x / 0.).
+    # Here, we replace everything with nan
+    df["emissions_par_CA_kgco2_keur"] = df["emissions_par_CA_kgco2_keur"].replace(
+        np.inf, np.nan
+    )
+
     df["scope_name"] = df["poste_emissions"].map(
         lambda x: poste_code_to_name["nom_scope"][x]
     )
@@ -278,6 +311,7 @@ def main():
     df_raw = pd.read_csv(RAW_ADEME_DATA_PATH, sep=";")
 
     df_enriched = enrich_df(df_raw)
+    df_enriched = add_financial_data(df_enriched)
     df_benchmark = transform_to_benchmark_df(df_enriched)
     df_enriched = _clean_and_add_scope_3(df_enriched, df_benchmark)
 

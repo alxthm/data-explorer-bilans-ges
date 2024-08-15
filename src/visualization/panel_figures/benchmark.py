@@ -54,6 +54,7 @@ def get_df() -> pd.DataFrame:
             "sub_poste_name": LABELS.poste_emissions,
             "emissions_par_salarie": LABELS.emissions_par_salarie,
             "emissions": LABELS.emissions_total,
+            "emissions_par_CA_kgco2_keur": LABELS.emissions_par_ca,
         }
     )
     df[LABELS.secteur_activite] = (
@@ -104,7 +105,7 @@ def get_multi_choice(
 
 _FILTERS_WITH_HIERARCHY = {
     "Filtrer les bilans": dict(
-        type_structure=dict(col=LABELS.type_structure, default=['Entreprise']),
+        type_structure=dict(col=LABELS.type_structure, default=["Entreprise"]),
         secteur_activite=dict(col=LABELS.secteur_activite),
     ),
     "Filtrer le périmètre": dict(
@@ -141,7 +142,11 @@ GROUP_BY_OPTIONS = {
     ],
 }
 
-PLOT_COL_OPTIONS = [LABELS.emissions_par_salarie, LABELS.emissions_total]
+PLOT_COL_OPTIONS = [
+    LABELS.emissions_par_ca,
+    LABELS.emissions_par_salarie,
+    LABELS.emissions_total,
+]
 
 
 def get_benchmark_dashboard():
@@ -169,7 +174,9 @@ def get_benchmark_dashboard():
         **{f"{k}_options": w.param.selected_options for k, w in _flat_widgets.items()},
     )
 
-    data = pn.bind(filter_options, df=df, secteur_activite="all", **kwargs)
+    data = pn.bind(
+        filter_options, df=df, secteur_activite="all", plot_col=plot_col, **kwargs
+    )
     data = pn.bind(aggregate_bilans, df=data, group_by=group_by)
     plot_emissions_widget = pn.bind(
         plot_emissions, df=data, plot_col=plot_col, group_by=group_by
@@ -249,6 +256,7 @@ def filter_options(
     df: pd.DataFrame,
     *,
     secteur_activite: str,
+    plot_col: str,
     **kwargs,
 ):
     x = df.copy()
@@ -270,7 +278,7 @@ def filter_options(
     with pd.option_context("future.no_silent_downcasting", True):
         # the context is just here to remove a pandas warning
         x = x.fillna(0)
-    x = x[x[LABELS.emissions_par_salarie] != 0]
+    x = x[x[plot_col] != 0]
     return x
 
 
@@ -334,18 +342,29 @@ def plot_emissions(
         y=plot_col,
         **SIZE,
     )
-    scatter = (
-        x.groupby(group_by)[plot_col]
-        .mean()
-        .rename("Moyenne")
-        .plot(kind="scatter", **SIZE)
-    )
+    mean_data = x.groupby(group_by)[plot_col].mean().rename("Moyenne")
+    scatter = mean_data.plot(kind="scatter", **SIZE)
 
     match plot_col:
+        case LABELS.emissions_par_ca:
+            opts = dict(
+                ylabel="kgCO2 eq. / k€ de C.A.",
+                # logx=True,
+                ylim=(
+                    0,
+                    # mean_data.max()
+                    _boxwhisker_upper_bound(x, group_by=group_by, plot_col=plot_col)
+                    + 1.0,
+                ),
+            )
         case LABELS.emissions_par_salarie:
             opts = dict(
                 ylabel="tCO2 eq. / salarié",
-                ylim=(0, _boxwhisker_upper_bound(x, group_by=group_by) + 1.0),
+                ylim=(
+                    0,
+                    _boxwhisker_upper_bound(x, group_by=group_by, plot_col=plot_col)
+                    + 1.0,
+                ),
             )
         case LABELS.emissions_total:
             opts = dict(
@@ -435,12 +454,12 @@ def _log_request(_n_bilans_text, **kwargs):
     return _n_bilans_text
 
 
-def _boxwhisker_upper_bound(x, group_by: str):
+def _boxwhisker_upper_bound(x, group_by: str, plot_col: str):
     # compute the upper bound of all whisker plots
     upper = 1.0
     for category in x[group_by].unique():
         if category is None:
             continue
-        y = x[(x[group_by] == category) & ~pd.isna(x[LABELS.emissions_par_salarie])]
-        upper = max(upper, _get_upper_bar(y[LABELS.emissions_par_salarie].values))
+        y = x[(x[group_by] == category) & ~pd.isna(x[plot_col])]
+        upper = max(upper, _get_upper_bar(y[plot_col].values))
     return upper

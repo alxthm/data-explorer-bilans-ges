@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from src.settings import DATA_PATH, RAW_ADEME_DATA_PATH
+from src.settings import DATA_PATH, RAW_ADEME_DATA_PATH, FILTERED_FINANCIAL_DATA_PATH
 
 
 def get_fiscal_year(date):
@@ -115,10 +115,7 @@ def filter_bilans_financiers_keep_only_ademe_sirens():
     df_ademe = pd.read_csv(RAW_ADEME_DATA_PATH, sep=";")
     ademe_siren_codes = df_ademe["SIREN principal"].unique()
     df_bilan = df_bilan[df_bilan["siren"].isin(ademe_siren_codes)]
-    df_bilan.to_csv(
-        DATA_PATH / "interim/synthese_bilans_financiers_ademe_only.csv",
-        index=False,
-    )
+    df_bilan.to_csv(FILTERED_FINANCIAL_DATA_PATH, index=False)
 
 
 if __name__ == "__main__":

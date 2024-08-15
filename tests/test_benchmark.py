@@ -28,8 +28,13 @@ def test_full_data(df):
     n_nans_and_zeros = (
         df[LABELS.emissions_total].eq(0).sum() + df[LABELS.emissions_total].isna().sum()
     )
+    # Note : here we are using the emissions_par_salarie column to filter for nans / zeros, but it should
+    # be equivalent to using emissions_total (since the number of salaries seems always well-defined).
     x = filter_options(
-        df, secteur_activite="all", **{f"{k}_all": True for k in FILTERS}
+        df,
+        secteur_activite="all",
+        plot_col=LABELS.emissions_par_salarie,
+        **{f"{k}_all": True for k in FILTERS},
     )
     assert len(x) == N_BILANS_TOTAL * N_POSTES_EMISSIONS - n_nans_and_zeros
 
@@ -133,7 +138,9 @@ def test_after_filter_and_group_by(df, group_by, filters):
         **{f"{k}_all": (v == "all") for k, v in filters.items()},
         **{f"{k}_options": v for k, v in filters.items()},
     )
-    df_filtered = filter_options(df, secteur_activite="all", **filter_kwargs)
+    df_filtered = filter_options(
+        df, secteur_activite="all", plot_col=LABELS.emissions_par_salarie, **filter_kwargs
+    )
     n_nans_and_zeros = (
         z[LABELS.emissions_total].eq(0).sum() + z[LABELS.emissions_total].isna().sum()
     )
