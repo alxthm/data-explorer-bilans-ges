@@ -31,6 +31,9 @@ def process_bilans_financiers():
     The original CSV (~300Mb) can be downloaded from
     https://www.data.gouv.fr/fr/datasets/r/9d213815-1649-4527-9eb4-427146ef2e5b
     The documentation can be found at : https://www.data.gouv.fr/fr/datasets/ratios-financiers-bce-inpi/
+
+    This code is partly taken from the data pipeline of the "Annuaire des Entreprises" :
+    https://github.com/annuaire-entreprises-data-gouv-fr/search-infra/tree/4386f3c2bc54ba8635b050769a34015a3f97a8dd/workflows/data_pipelines/bilans_financiers
     """
     # Keep only selected fields.
     # Another field (in the original INPI database, but not in this .csv) could
