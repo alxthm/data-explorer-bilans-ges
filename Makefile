@@ -46,21 +46,20 @@ data/raw/heavy/data_uncompressed:
 	# no need to do this step again to build the dataset
 	touch data/raw/heavy/data_uncompressed
 
-## Make sure we can find the raw INPI data
-data/raw/heavy/ratios_inpi_bce.csv:
+## Rebuild INPI data from the raw data
+data/interim/synthese_bilans_financiers_ademe_only.csv:
+	# The synthese_bilans_financiers_ademe_only.csv interim file is light enough to be version controlled,
+	# which means that someone cloning the repo can simply rely on it without having to download
+	# the entire raw INPI dataset.
+	# However, if you ever need to re-process the raw INPI dataset (e.g. because ADEME data was updated),
+	# then you can remove the interim file, run `make data`, and commit the new updated interim file.
+	# You will need to download the raw dataset though.
 	@if [ ! -f "$$INPI_DATA_PATH" ]; then \
 		echo "Error: File '$$INPI_DATA_PATH' not found. "; \
 		echo "Please download the raw INPI data (cf src/data/inpi.py) and set the INPI_DATA_PATH variable."; \
 		exit 1; \
 	fi
 	ln -s "$$INPI_DATA_PATH" data/raw/heavy/ratios_inpi_bce.csv
-
-data/interim/synthese_bilans_financiers_ademe_only.csv: data/raw/heavy/ratios_inpi_bce.csv
-	# The synthese_bilans_financiers_ademe_only.csv interim file is light enough to be version controlled,
-	# which means that someone cloning the repo can simply rely on it without having to download
-	# the entire raw INPI dataset.
-	# However, if you ever need to re-process the raw INPI dataset (e.g. because ADEME data was updated),
-	# then you can remove the interim file, run `make data`, and commit the new updated interim file.
 	$(PYTHON) -m src.data.inpi
 
 ## Process raw data into datasets that the app can use
