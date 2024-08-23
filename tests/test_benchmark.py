@@ -33,7 +33,7 @@ def test_full_data(df):
     x = filter_options(
         df,
         secteur_activite="all",
-        plot_col=LABELS.emissions_par_salarie,
+        plot_col=LABELS.emissions_par_collaborateur,
         **{f"{k}_all": True for k in FILTERS},
     )
     assert len(x) == N_BILANS_TOTAL * N_POSTES_EMISSIONS - n_nans_and_zeros
@@ -42,7 +42,7 @@ def test_full_data(df):
     assert (
         TOTAL_EMISSIONS
         == df[LABELS.emissions_total].sum()
-        == (df[LABELS.emissions_par_salarie] * df["nb_salaries_mean"]).sum()
+        == (df[LABELS.emissions_par_collaborateur] * df["nb_salaries_mean"]).sum()
     )
 
 
@@ -139,7 +139,7 @@ def test_after_filter_and_group_by(df, group_by, filters):
         **{f"{k}_options": v for k, v in filters.items()},
     )
     df_filtered = filter_options(
-        df, secteur_activite="all", plot_col=LABELS.emissions_par_salarie, **filter_kwargs
+        df, secteur_activite="all", plot_col=LABELS.emissions_par_collaborateur, **filter_kwargs
     )
     n_nans_and_zeros = (
         z[LABELS.emissions_total].eq(0).sum() + z[LABELS.emissions_total].isna().sum()
@@ -156,7 +156,7 @@ def test_after_filter_and_group_by(df, group_by, filters):
     # ... and in the filtered and aggregated dataframe
     emissions_x = x.groupby(group_by, dropna=False)[LABELS.emissions_total].sum().values
     emissions_x2 = (
-        x.groupby(group_by, dropna=False)[LABELS.emissions_par_salarie].sum().values
+        x.groupby(group_by, dropna=False)[LABELS.emissions_par_collaborateur].sum().values
         * df_filtered.groupby(group_by, dropna=False)["nb_salaries_mean"].sum().values
     )
     # They should all match, category by category

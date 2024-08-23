@@ -12,7 +12,7 @@ TOTAL_EMISSIONS = 2073617687.5238597
 
 EMISSIONS_PER = {
     "Année de reporting": {
-        "Intensité_carbone_salarié_mean": {
+        "Intensité_carbone_collaborateur_mean": {
             2009: 45.8,
             2010: 26.7,
             2011: 22.8,
@@ -30,7 +30,7 @@ EMISSIONS_PER = {
             2023: 662.6,
             2024: 34.7,
         },
-        "Intensité_carbone_salarié_median": {
+        "Intensité_carbone_collaborateur_median": {
             2009: 45.8,
             2010: 25.4,
             2011: 6.8,
@@ -68,7 +68,7 @@ EMISSIONS_PER = {
         },
     },
     "Catégorie d'émissions": {
-        "Intensité_carbone_salarié_mean": {
+        "Intensité_carbone_collaborateur_mean": {
             "1 - Émissions directes": 243.3,
             "2 - Énergie": 7.1,
             "3 - Déplacement": 27.8,
@@ -76,7 +76,7 @@ EMISSIONS_PER = {
             "5 - Produits vendus": 151.4,
             "6 - Autres émissions indirectes": 3.0,
         },
-        "Intensité_carbone_salarié_median": {
+        "Intensité_carbone_collaborateur_median": {
             "1 - Émissions directes": 1.5,
             "2 - Énergie": 0.3,
             "3 - Déplacement": 0.0,
@@ -94,14 +94,14 @@ EMISSIONS_PER = {
         },
     },
     "Type de structure": {
-        "Intensité_carbone_salarié_mean": {
+        "Intensité_carbone_collaborateur_mean": {
             "Association": 50.0,
             "Collectivité territoriale (dont EPCI)": 195.7,
             "Entreprise": 727.0,
             "Établissement public": 21.3,
             "État": 25.3,
         },
-        "Intensité_carbone_salarié_median": {
+        "Intensité_carbone_collaborateur_median": {
             "Association": 2.4,
             "Collectivité territoriale (dont EPCI)": 14.0,
             "Entreprise": 6.8,

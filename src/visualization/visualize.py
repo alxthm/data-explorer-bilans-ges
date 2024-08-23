@@ -72,5 +72,5 @@ class LABELS:
     poste_emissions = "Poste d'émissions"
     scope_emissions = "Scope"
     emissions_par_ca = "Intensité_carbone_monétaire"
-    emissions_par_salarie = "Intensité_carbone_salarié"
+    emissions_par_collaborateur = "Intensité_carbone_collaborateur"
     emissions_total = "Émissions_totales"

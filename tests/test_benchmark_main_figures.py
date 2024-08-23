@@ -27,12 +27,12 @@ def test_main_figures(df):
         LABELS.category_emissions,
     ]:
         x = benchmark.aggregate_bilans(df, group_by=group_by)
-        x_mean = x.groupby(group_by)[[LABELS.emissions_par_salarie]].mean()
-        x_median = x.groupby(group_by)[[LABELS.emissions_par_salarie]].median()
+        x_mean = x.groupby(group_by)[[LABELS.emissions_par_collaborateur]].mean()
+        x_median = x.groupby(group_by)[[LABELS.emissions_par_collaborateur]].median()
         x_count = (
-            x.groupby(group_by)[[LABELS.emissions_par_salarie]]
+            x.groupby(group_by)[[LABELS.emissions_par_collaborateur]]
             .count()
-            .rename(columns={LABELS.emissions_par_salarie: "count"})
+            .rename(columns={LABELS.emissions_par_collaborateur: "count"})
         )
         x = pd.merge(x_mean, x_median, on=group_by, suffixes=("_mean", "_median"))
         x = pd.merge(x, x_count, on=group_by)

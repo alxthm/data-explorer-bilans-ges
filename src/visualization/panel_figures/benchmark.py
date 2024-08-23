@@ -52,7 +52,7 @@ def get_df() -> pd.DataFrame:
             "scope_name": LABELS.scope_emissions,
             "poste_name": LABELS.category_emissions,
             "sub_poste_name": LABELS.poste_emissions,
-            "emissions_par_salarie": LABELS.emissions_par_salarie,
+            "emissions_par_salarie": LABELS.emissions_par_collaborateur,
             "emissions": LABELS.emissions_total,
             "emissions_par_CA_kgco2_keur": LABELS.emissions_par_ca,
         }
@@ -144,7 +144,7 @@ GROUP_BY_OPTIONS = {
 
 PLOT_COL_OPTIONS = [
     LABELS.emissions_par_ca,
-    LABELS.emissions_par_salarie,
+    LABELS.emissions_par_collaborateur,
     LABELS.emissions_total,
 ]
 
@@ -241,7 +241,7 @@ def get_benchmark_dashboard():
         ),
         pn.Column(
             "## Notes",
-            section("benchmark/notes", "sources"),
+            section("benchmark/warning", "sources", "benchmark/doc"),
             styles={
                 # Set flex-grow to 0 so the notes don't get priority for growing. They can shrink if needed though
                 "flex": "0 1 auto",
@@ -357,9 +357,9 @@ def plot_emissions(
                     + 1.0,
                 ),
             )
-        case LABELS.emissions_par_salarie:
+        case LABELS.emissions_par_collaborateur:
             opts = dict(
-                ylabel="tCO2 eq. / salarié",
+                ylabel="tCO2 eq. / collaborateur",
                 ylim=(
                     0,
                     _boxwhisker_upper_bound(x, group_by=group_by, plot_col=plot_col)
